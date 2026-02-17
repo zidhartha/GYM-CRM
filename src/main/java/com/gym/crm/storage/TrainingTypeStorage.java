@@ -50,9 +50,9 @@ public class TrainingTypeStorage {
 
     @PostConstruct
     public void init() {
-        addTrainingType("Cardio");
-        addTrainingType("Strength");
-        addTrainingType("Yoga");
+        addTrainingType("Leg day");
+        addTrainingType("Push day");
+        addTrainingType("Pull day");
     }
 
 

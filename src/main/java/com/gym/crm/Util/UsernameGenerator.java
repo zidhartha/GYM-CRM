@@ -30,7 +30,7 @@ public class UsernameGenerator {
     }
 
     public String generateUsername(String firstname, String lastname){
-       String base = firstname.trim().toLowerCase() + "." + lastname.trim().toLowerCase();
+       String base = firstname.trim() + "." + lastname.trim();
        String username = base;
        int counter = 1;
        Set<String> existingUsernames = getAllUsernames();

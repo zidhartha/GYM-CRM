@@ -14,7 +14,6 @@ public class PasswordGenerator {
     private static final SecureRandom random = new SecureRandom();
 
     public String generatePassword() {
-        SecureRandom random = new SecureRandom();
 
         StringBuilder sb = new StringBuilder();
 
