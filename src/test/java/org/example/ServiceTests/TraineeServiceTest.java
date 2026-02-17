@@ -121,7 +121,8 @@ class TraineeServiceTest {
         when(traineeDao.findById(1L)).thenReturn(Optional.of(t));
         when(traineeDao.update(any(Trainee.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Trainee updated = traineeService.update(1L, "Jane", "Doe", LocalDate.of(2001,1,1), "Batumi", true);
+        Trainee updated = traineeService
+                .updateTrainee(1L, "Jane", "Doe", LocalDate.of(2001,1,1), "Batumi", true);
 
         assertEquals("Jane", updated.getFirstName());
         assertTrue(updated.isActive());
@@ -131,6 +132,6 @@ class TraineeServiceTest {
     @Test
     void testCreateTrainee_invalidInput() {
         assertThrows(IllegalArgumentException.class, () ->
-                traineeService.create(null, "Doe", LocalDate.of(2000,1,1), "Tbilisi"));
+                traineeService.createTrainee(null, "Doe", LocalDate.of(2000,1,1), "Tbilisi"));
     }
 }
