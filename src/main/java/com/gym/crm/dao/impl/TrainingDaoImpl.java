@@ -18,7 +18,6 @@ public class TrainingDaoImpl implements TrainingDao {
     private final TrainingStorage trainingStorage;
     private static final Logger log = LoggerFactory.getLogger(TrainingDaoImpl.class);
 
-    private long idCounter = 0;
 
     public TrainingDaoImpl(TrainingStorage trainingStorage) {
         this.trainingStorage = trainingStorage;
@@ -27,16 +26,10 @@ public class TrainingDaoImpl implements TrainingDao {
     @Override
     public Training save(Training training) {
         log.info("Saving a training");
-        if (training == null) {
-            log.error("The training passed in is null.");
-            throw new TrainingNotFoundException();
+        if (training == null || training.getId() == null) {
+            log.error("The training or the training id passed in is null.");
+            throw new IllegalArgumentException("The training or the training id passed in is null.");
         }
-
-        if (training.getId() == null) {
-            training.setId(++idCounter);
-            log.debug("Generated ID: {}", training.getId());
-        }
-
         trainingStorage.getStorage().put(training.getId(), training);
         log.info("Saved the training successfully with ID: {}", training.getId());
         return training;
@@ -44,16 +37,13 @@ public class TrainingDaoImpl implements TrainingDao {
 
     @Override
     public Optional<Training> findById(Long id) {
-        log.info("Attempting to find a training with the id {}", id);
-
-        Training training = trainingStorage.getStorage().get(id);
-
-        if (training == null) {
-            log.warn("Training with the id {} does not exist", id);
-            throw new TrainingNotFoundException();
+        Optional<Training> training = Optional.ofNullable(trainingStorage.getStorage().get(id));
+        if (training.isPresent()) {
+            log.info("Training found with id {}", id);
+        } else {
+            log.warn("Training NOT found with id {}", id);
         }
-
-        return Optional.of(training);
+        return training;
     }
 
     @Override
@@ -66,13 +56,8 @@ public class TrainingDaoImpl implements TrainingDao {
 
     @Override
     public void delete(Long id) {
-        log.info("Deleting the training with the id {}", id);
-        if (!trainingStorage.getStorage().containsKey(id)) {
-            log.warn("Training with the id {} does not exist", id);
-            return;
-        }
         trainingStorage.getStorage().remove(id);
-        log.info("Successfully deleted the training with the id {}", id);
+        log.debug("Deleted training with id {}. Total trainings: {}", id, trainingStorage.getStorage().size());
     }
 
     @Override

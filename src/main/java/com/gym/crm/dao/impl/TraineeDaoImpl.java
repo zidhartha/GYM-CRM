@@ -17,7 +17,6 @@ public class TraineeDaoImpl implements TraineeDao {
     private final TraineeStorage traineeStorage;
     private static final Logger log = LoggerFactory.getLogger(TraineeDaoImpl.class);
 
-    private long idCounter = 0;
 
     public TraineeDaoImpl(TraineeStorage traineeStorage) {
         this.traineeStorage = traineeStorage;
@@ -25,24 +24,19 @@ public class TraineeDaoImpl implements TraineeDao {
 
     @Override
     public Trainee save(Trainee trainee) {
-        log.info("Saving a trainee.");
-        if (trainee == null) {
-            log.error("The trainee passed in is null.");
-            throw new TraineeNotFoundException();
+        if (trainee == null || trainee.getId() == null) {
+            throw new IllegalArgumentException("Trainee or ID cannot be null");
         }
-
-        if (trainee.getId() == null) {
-            trainee.setId(++idCounter);
-            log.debug("Generated ID: {}", trainee.getId());
-        }
-
         traineeStorage.getStorage().put(trainee.getId(), trainee);
-        log.info("Saved the trainee successfully with ID: {}", trainee.getId());
+        log.debug("Trainee saved with id {}. Total trainees: {}", trainee.getId(), traineeStorage.getStorage().size());
         return trainee;
     }
 
     @Override
     public Trainee update(Trainee trainee) {
+        if (trainee == null || trainee.getId() == null) {
+            throw new IllegalArgumentException("Trainee or trainee ID is null");
+        }
         Long id = trainee.getId();
         log.info("Updating the trainee with the id {}", id);
         if (traineeStorage.getStorage().containsKey(id)) {
@@ -56,16 +50,13 @@ public class TraineeDaoImpl implements TraineeDao {
 
     @Override
     public Optional<Trainee> findById(Long id) {
-        log.info("Attempting to find a trainee with the id {}", id);
-
-        Trainee trainee = traineeStorage.getStorage().get(id);
-
-        if (trainee == null) {
-            log.warn("The trainee with id {} does not exist", id);
-            throw new TraineeNotFoundException();
+        Optional<Trainee> trainee = Optional.ofNullable(traineeStorage.getStorage().get(id));
+        if (trainee.isPresent()) {
+            log.info("Trainee found with id {}", id);
+        } else {
+            log.warn("Trainee NOT found with id {}", id);
         }
-
-        return Optional.of(trainee);
+        return trainee;
     }
 
     @Override
@@ -78,11 +69,6 @@ public class TraineeDaoImpl implements TraineeDao {
 
     @Override
     public void delete(Long id) {
-        log.info("Deleting the trainee with the id {}", id);
-        if (!traineeStorage.getStorage().containsKey(id)) {
-            log.warn("Trainee with the id {} does not exist", id);
-            return;
-        }
         traineeStorage.getStorage().remove(id);
         log.info("Successfully deleted the trainee with the id {}", id);
     }

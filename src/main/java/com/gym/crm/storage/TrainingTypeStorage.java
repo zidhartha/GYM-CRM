@@ -1,7 +1,9 @@
 package com.gym.crm.storage;
 
+import com.gym.crm.Util.IdGenerator;
 import com.gym.crm.model.TrainingType;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -13,12 +15,15 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TrainingTypeStorage {
 
     private final Map<Long, TrainingType> storage = new HashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(1);
+    private IdGenerator idGenerator;
 
-    private long nextId = 1;
+    @Autowired
+    public void setIdGenerator(IdGenerator idGenerator){
+        this.idGenerator = idGenerator;
+    }
 
     public TrainingType addTrainingType(String name) {
-        TrainingType type = new TrainingType(nextId++, name);
+        TrainingType type = new TrainingType(idGenerator.generateNextId(), name);
         storage.put(type.getId(), type);
         return type;
     }

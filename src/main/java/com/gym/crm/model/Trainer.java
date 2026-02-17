@@ -1,9 +1,13 @@
 package com.gym.crm.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.util.Objects;
 
+@Setter
+@Getter
 @ToString
 public class Trainer extends User {
     private TrainingType specialization;
@@ -14,13 +18,6 @@ public class Trainer extends User {
     }
     public Trainer(){
         super();
-    }
-    public TrainingType getSpecialization() {
-        return specialization;
-    }
-
-    public void setSpecialization(TrainingType newSpecialization) {
-        specialization = newSpecialization;
     }
 
     @Override

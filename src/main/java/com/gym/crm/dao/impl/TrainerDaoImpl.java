@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -17,7 +18,6 @@ public class TrainerDaoImpl implements TrainerDao {
     private final TrainerStorage trainerStorage;
     private static final Logger log = LoggerFactory.getLogger(TrainerDaoImpl.class);
 
-    private long idCounter = 0;
 
     public TrainerDaoImpl(TrainerStorage trainerStorage) {
         this.trainerStorage = trainerStorage;
@@ -25,18 +25,11 @@ public class TrainerDaoImpl implements TrainerDao {
 
     @Override
     public Trainer save(Trainer trainer) {
-        log.info("Saving a trainer...");
+        log.info("Saving a trainer.");
         if (trainer == null) {
-            log.error("The trainer passed in is null.");
-            throw new TrainerNotFoundException();
+            log.error("The trainer or the trainer id passed in is null.");
+            throw new IllegalArgumentException();
         }
-
-
-        if (trainer.getId() == null) {
-            trainer.setId(++idCounter);
-            log.debug("Generated ID: {}", trainer.getId());
-        }
-
         trainerStorage.getStorage().put(trainer.getId(), trainer);
         log.info("Saved the trainer successfully with ID: {}", trainer.getId());
         return trainer;
@@ -44,29 +37,26 @@ public class TrainerDaoImpl implements TrainerDao {
 
     @Override
     public Trainer update(Trainer trainer) {
-        Long id = trainer.getId();
-        log.info("Updating the trainer with the id {}", id);
-        if (trainerStorage.getStorage().containsKey(id)) {
-            trainerStorage.getStorage().put(id, trainer);
-            log.info("Successfully updated the trainer with id {}", id);
-            return trainer;
+        Map<Long, Trainer> storage = trainerStorage.getStorage();
+        if (storage.containsKey(trainer.getId())) {
+            storage.put(trainer.getId(), trainer);
+            log.info("Updated trainer with id {}", trainer.getId());
+        } else {
+            log.error("Cannot update. Trainer with id {} not found", trainer.getId());
+            throw new TrainerNotFoundException();
         }
-        log.warn("The trainer with the id {} does not exist in the database", id);
-        throw new TrainerNotFoundException();
+        return trainer;
     }
 
     @Override
     public Optional<Trainer> findById(Long id) {
-        log.info("Attempting to find a trainer with the id {}", id);
-
-        Trainer trainer = trainerStorage.getStorage().get(id);
-
-        if (trainer == null) {
-            log.warn("Trainer with the id {} does not exist", id);
-            throw new TrainerNotFoundException();
+        Optional<Trainer> trainer = Optional.ofNullable(trainerStorage.getStorage().get(id));
+        if (trainer.isPresent()) {
+            log.info("Trainer found with id {}", id);
+        } else {
+            log.warn("Trainer NOT found with id {}", id);
         }
-
-        return Optional.of(trainer);
+        return trainer;
     }
 
     @Override
@@ -79,12 +69,7 @@ public class TrainerDaoImpl implements TrainerDao {
 
     @Override
     public void delete(long id) {
-        log.info("Deleting the trainer with the id {}", id);
-        if (!trainerStorage.getStorage().containsKey(id)) {
-            log.warn("Trainer with the id {} does not exist in the storage", id);
-            return;
-        }
         trainerStorage.getStorage().remove(id);
-        log.info("Deleted the trainer with the id {} successfully", id);
+        log.debug("Deleted trainer with id {}. Total trainers: {}", id, trainerStorage.getStorage().size());
     }
 }

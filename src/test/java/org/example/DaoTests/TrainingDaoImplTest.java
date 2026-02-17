@@ -4,90 +4,129 @@ package org.example.DaoTests;
 import com.gym.crm.Exceptions.TrainingNotFoundException;
 import com.gym.crm.dao.impl.TrainingDaoImpl;
 import com.gym.crm.model.Training;
-import com.gym.crm.model.TrainingType;
 import com.gym.crm.storage.TrainingStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
-import java.time.LocalDate;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class TrainingDaoImplTest {
 
-    private TrainingDaoImpl trainingDao;
     private TrainingStorage trainingStorage;
+    private TrainingDaoImpl trainingDao;
 
     @BeforeEach
     void setUp() {
-        trainingStorage = new TrainingStorage();
+        trainingStorage = mock(TrainingStorage.class);
         trainingDao = new TrainingDaoImpl(trainingStorage);
     }
 
-    private Training createTraining() {
-        Training t = new Training();
-        t.setTraineeId(1L);
-        t.setTrainerId(2L);
-        t.setTrainingName("Leg Day");
-        t.setTrainingType(new TrainingType("Strength"));
-        t.setTrainingDate(LocalDate.now());
-        t.setTrainingDuration(60);
-        return t;
-    }
-
     @Test
-    void saveTraining_success() {
-        Training training = createTraining();
+    void testSaveTraining() {
+        Training training = new Training();
+        training.setId(1L);
+
+        Map<Long, Training> storageMap = new HashMap<>();
+        when(trainingStorage.getStorage()).thenReturn(storageMap);
 
         Training saved = trainingDao.save(training);
 
-        assertNotNull(saved.getId());
-        assertEquals("Leg Day", saved.getTrainingName());
+        assertEquals(training, saved);
+        assertTrue(storageMap.containsKey(1L));
+        assertEquals(training, storageMap.get(1L));
     }
 
     @Test
-    void saveTraining_null_throwsException() {
-        assertThrows(TrainingNotFoundException.class,
-                () -> trainingDao.save(null));
+    void testSaveTrainingThrowsOnNull() {
+        assertThrows(IllegalArgumentException.class, () -> trainingDao.save(null));
+
+        Training training = new Training();
+        training.setId(null);
+        assertThrows(IllegalArgumentException.class, () -> trainingDao.save(training));
     }
 
     @Test
-    void findById_success() {
-        Training training = trainingDao.save(createTraining());
+    void testFindByIdFound() {
+        Training training = new Training();
+        training.setId(1L);
 
-        Training found = trainingDao.findById(training.getId()).get();
+        Map<Long, Training> storageMap = new HashMap<>();
+        storageMap.put(1L, training);
+        when(trainingStorage.getStorage()).thenReturn(storageMap);
 
-        assertEquals(training.getId(), found.getId());
+        Optional<Training> result = trainingDao.findById(1L);
+        assertTrue(result.isPresent());
+        assertEquals(training, result.get());
     }
 
     @Test
-    void findById_notFound_throwsException() {
-        assertThrows(TrainingNotFoundException.class,
-                () -> trainingDao.findById(999L));
+    void testFindByIdNotFound() {
+        Map<Long, Training> storageMap = new HashMap<>();
+        when(trainingStorage.getStorage()).thenReturn(storageMap);
+
+        Optional<Training> result = trainingDao.findById(1L);
+        assertFalse(result.isPresent());
     }
 
     @Test
-    void findAll_returnsAllTrainings() {
-        trainingDao.save(createTraining());
-        trainingDao.save(createTraining());
+    void testFindAll() {
+        Training t1 = new Training(); t1.setId(1L);
+        Training t2 = new Training(); t2.setId(2L);
 
-        assertEquals(2, trainingDao.findAll().size());
-    }
+        Map<Long, Training> storageMap = new HashMap<>();
+        storageMap.put(1L, t1);
+        storageMap.put(2L, t2);
+        when(trainingStorage.getStorage()).thenReturn(storageMap);
 
-
-
-    @Test
-    void deleteTraining_success() {
-        Training training = trainingDao.save(createTraining());
-
-        trainingDao.delete(training.getId());
-
-        assertThrows(TrainingNotFoundException.class,
-                () -> trainingDao.findById(training.getId()));
+        List<Training> all = trainingDao.findAll();
+        assertEquals(2, all.size());
+        assertTrue(all.contains(t1));
+        assertTrue(all.contains(t2));
     }
 
     @Test
-    void deleteTraining_notFound_doesNothing() {
-        assertDoesNotThrow(() -> trainingDao.delete(999L));
+    void testDelete() {
+        Training t1 = new Training(); t1.setId(1L);
+
+        Map<Long, Training> storageMap = new HashMap<>();
+        storageMap.put(1L, t1);
+        when(trainingStorage.getStorage()).thenReturn(storageMap);
+
+        trainingDao.delete(1L);
+        assertFalse(storageMap.containsKey(1L));
+    }
+
+    @Test
+    void testFindByTrainerId() {
+        Training t1 = new Training(); t1.setId(1L); t1.setTrainerId(100L);
+        Training t2 = new Training(); t2.setId(2L); t2.setTrainerId(101L);
+
+        Map<Long, Training> storageMap = new HashMap<>();
+        storageMap.put(1L, t1);
+        storageMap.put(2L, t2);
+        when(trainingStorage.getStorage()).thenReturn(storageMap);
+
+        List<Training> result = trainingDao.findByTrainerId(100L);
+        assertEquals(1, result.size());
+        assertEquals(t1, result.get(0));
+    }
+
+    @Test
+    void testFindByTraineeId() {
+        Training t1 = new Training(); t1.setId(1L); t1.setTraineeId(200L);
+        Training t2 = new Training(); t2.setId(2L); t2.setTraineeId(201L);
+
+        Map<Long, Training> storageMap = new HashMap<>();
+        storageMap.put(1L, t1);
+        storageMap.put(2L, t2);
+        when(trainingStorage.getStorage()).thenReturn(storageMap);
+
+        List<Training> result = trainingDao.findByTraineeId(200L);
+        assertEquals(1, result.size());
+        assertEquals(t1, result.get(0));
     }
 }
