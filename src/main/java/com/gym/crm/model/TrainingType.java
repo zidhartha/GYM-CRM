@@ -1,6 +1,5 @@
 package com.gym.crm.model;
 
-import com.gym.crm.storage.TrainingTypeStorage;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

@@ -1,18 +1,18 @@
-package com.gym.crm.storage;
+    package com.gym.crm.storage;
 
-import com.gym.crm.model.Trainee;
-import org.springframework.stereotype.Component;
+    import com.gym.crm.model.Trainee;
+    import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
+    import java.util.HashMap;
+    import java.util.Map;
 
-@Component
-public class TraineeStorage{
-    private Map<Long, Trainee> traineeMap = new HashMap<>();
+    @Component
+    public class TraineeStorage{
+        private Map<Long, Trainee> traineeMap = new HashMap<>();
 
 
-    public Map<Long,Trainee> getStorage(){
-        return traineeMap;
+        public Map<Long,Trainee> getStorage(){
+            return traineeMap;
+        }
+
     }
-
-}
