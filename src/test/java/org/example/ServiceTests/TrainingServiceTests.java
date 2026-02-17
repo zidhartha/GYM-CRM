@@ -72,8 +72,10 @@ class TrainingServiceTests {
 
     @Test
     void selectAllTrainings_success() {
-        Training t1 = new Training(); t1.setId(1L);
-        Training t2 = new Training(); t2.setId(2L);
+        Training t1 = new Training();
+        t1.setId(1L);
+        Training t2 = new Training();
+        t2.setId(2L);
         when(trainingDao.findAll()).thenReturn(List.of(t1, t2));
 
         List<Training> result = trainingService.selectAllTrainings();
@@ -82,8 +84,10 @@ class TrainingServiceTests {
 
     @Test
     void selectTrainingsByTraineeId_success() {
-        Training t1 = new Training(); t1.setTraineeId(1L);
-        Training t2 = new Training(); t2.setTraineeId(1L);
+        Training t1 = new Training();
+        t1.setTraineeId(1L);
+        Training t2 = new Training();
+        t2.setTraineeId(1L);
         when(trainingDao.findByTraineeId(1L)).thenReturn(List.of(t1, t2));
 
         List<Training> result = trainingService.selectTrainingsByTraineeId(1L);
@@ -91,9 +95,17 @@ class TrainingServiceTests {
     }
 
     @Test
+    void selectTraining_nullId_throwsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> trainingService.selectTraining(null));
+    }
+
+
+    @Test
     void selectTrainingsByTrainerId_success() {
-        Training t1 = new Training(); t1.setTrainerId(2L);
-        Training t2 = new Training(); t2.setTrainerId(2L);
+        Training t1 = new Training();
+        t1.setTrainerId(2L);
+        Training t2 = new Training();
+        t2.setTrainerId(2L);
         when(trainingDao.findByTrainerId(2L)).thenReturn(List.of(t1, t2));
 
         List<Training> result = trainingService.selectTrainingsByTrainerId(2L);

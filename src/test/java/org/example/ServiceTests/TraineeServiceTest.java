@@ -134,4 +134,21 @@ class TraineeServiceTest {
         assertThrows(IllegalArgumentException.class, () ->
                 traineeService.createTrainee(null, "Doe", LocalDate.of(2000,1,1), "Tbilisi"));
     }
+
+
+    @Test
+    void testSelect_nullId_throwsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> traineeService.select(null));
+    }
+
+    @Test
+    void testDeleteTrainee_nullId_throwsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> traineeService.deleteTrainee(null));
+    }
+
+    @Test
+    void testUpdateTrainee_nullId_throwsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () ->
+                traineeService.updateTrainee(null, "John", "Doe", LocalDate.of(2000,1,1), "Tbilisi", true));
+    }
 }

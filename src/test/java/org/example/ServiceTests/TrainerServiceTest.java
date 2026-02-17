@@ -124,6 +124,17 @@ class TrainerServiceTest {
     }
 
     @Test
+    void selectTrainer_nullId_throwsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> trainerService.selectTrainer(null));
+    }
+
+    @Test
+    void updateTrainer_nullId_throwsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () ->
+                trainerService.updateTrainer(null, "John", "Doe", new TrainingType(1L, "Cardio"), true));
+    }
+
+    @Test
     void selectTrainerByUsername_notFound() {
         when(trainerDao.findAll()).thenReturn(List.of());
         assertThrows(TrainerNotFoundException.class,
