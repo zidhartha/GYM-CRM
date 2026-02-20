@@ -31,13 +31,13 @@ public class GymApplication {
         TrainerStorage trainerStorage = context.getBean(TrainerStorage.class);
         TrainingStorage trainingStorage = context.getBean(TrainingStorage.class);
 
-        System.out.println("=== Trainees ===");
+        System.out.println("====== Trainees ======");
         traineeStorage.getStorage().forEach((id, t) -> System.out.println(id + " -> " + t.getUsername()));
 
-        System.out.println("\n=== Trainers ===");
+        System.out.println("\n====== Trainers ======");
         trainerStorage.getStorage().forEach((id, t) -> System.out.println(id + " -> " + t.getUsername()));
 
-        System.out.println("\n=== Trainings ===");
+        System.out.println("\n====== Trainings ======");
         trainingStorage.getStorage().forEach((id, t) ->
                 System.out.println(id + " -> " + t.getTrainingName() + " (" + t.getTrainingType().getName() + ")")
         );

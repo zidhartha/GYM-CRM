@@ -2,30 +2,29 @@ package com.gym.crm.storage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.gym.crm.Loader.TraineeLoader;
-import com.gym.crm.Loader.TrainerLoader;
-import com.gym.crm.Loader.TrainingLoader;
-import com.gym.crm.Loader.TrainingTypeLoader;
-import com.gym.crm.model.TrainingType;
+import com.gym.crm.Loader.Loader;
+import com.gym.crm.Loader.SeedDataContext;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.InputStream;
-import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class StorageInitializer {
 
-    private final TrainingTypeLoader trainingTypeLoader;
-    private final TraineeLoader traineeLoader;
-    private final TrainerLoader trainerLoader;
-    private final TrainingLoader trainingLoader;
+    private final Logger log = LoggerFactory.getLogger(StorageInitializer.class);
+
+    private  SeedDataContext seedDataContext;
+    private  List<Loader> loaders;
 
     @Value("${data.storage}")
     private Resource dataFile;
@@ -33,39 +32,45 @@ public class StorageInitializer {
     private final ObjectMapper mapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
-    public StorageInitializer(
-            TrainingTypeLoader trainingTypeLoader,
-            TraineeLoader traineeLoader,
-            TrainerLoader trainerLoader,
-            TrainingLoader trainingLoader
-    ) {
-        this.trainingTypeLoader = trainingTypeLoader;
-        this.traineeLoader = traineeLoader;
-        this.trainerLoader = trainerLoader;
-        this.trainingLoader = trainingLoader;
+    @Autowired
+    public void setSeedDataContext(SeedDataContext seedDataContext){
+        this.seedDataContext = seedDataContext;
     }
+
+    @Autowired
+    public void setLoaders(List<Loader> loaders){
+        this.loaders = loaders;
+    }
+
 
     @PostConstruct
     public void init() {
         try (InputStream is = dataFile.getInputStream()) {
             SeedData data = mapper.readValue(is, SeedData.class);
+            seedDataContext.setSeedData(data);
 
-            Map<String, TrainingType> types =
-                    trainingTypeLoader.load(data.getTrainingTypes());
+            log.info("Starting storage instantiation");
 
-            traineeLoader.load(data.getTrainees());
-            trainerLoader.load(data.getTrainers(), types);
-            trainingLoader.load(data.getTrainings(), types);
 
+            loaders.stream()
+                    .sorted(Comparator.comparingInt(Loader::getOrder))
+                    .forEach(loader -> {
+                        log.info("Executing loader: {}", loader.getClass().getSimpleName());
+                        loader.load();
+                        log.info("{} finished successfully", loader.getClass().getSimpleName());
+                    });
+
+            log.info("All storage objects successfully initialized.");
         } catch (Exception e) {
-            throw new IllegalStateException("Storage initialization failed", e);
+            log.error("Storage initialization failed", e);
+            throw new IllegalStateException("Could not initialize storage", e);
         }
     }
+
 
     @Getter
     @Setter
     public static class SeedData {
-
         private List<String> trainingTypes;
         private List<TraineeSeed> trainees;
         private List<TrainerSeed> trainers;
@@ -74,16 +79,16 @@ public class StorageInitializer {
 
     @Getter
     @Setter
-    public static class TraineeSeed{
+    public static class TraineeSeed {
         private String firstName;
         private String lastName;
         private String address;
-        private LocalDate dateOfBirth;
+        private java.time.LocalDate dateOfBirth;
     }
 
     @Getter
     @Setter
-    public static class TrainerSeed{
+    public static class TrainerSeed {
         private String firstName;
         private String lastName;
         private String specializationName;
@@ -91,14 +96,12 @@ public class StorageInitializer {
 
     @Getter
     @Setter
-    public static class TrainingSeed{
+    public static class TrainingSeed {
         private Long traineeId;
         private Long trainerId;
         private String trainingName;
         private String trainingTypeName;
-        private LocalDate trainingDate;
+        private java.time.LocalDate trainingDate;
         private Integer trainingDurationMinutes;
     }
-
 }
-

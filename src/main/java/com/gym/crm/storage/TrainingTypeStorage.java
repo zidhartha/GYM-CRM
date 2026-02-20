@@ -40,11 +40,6 @@ public class TrainingTypeStorage {
         return Optional.ofNullable(storage.get(id));
     }
 
-    public Optional<TrainingType> findByName(String name) {
-        return storage.values().stream()
-                .filter(t -> t.getName().equalsIgnoreCase(name))
-                .findFirst();
-    }
 
 
     @PostConstruct
@@ -55,4 +50,11 @@ public class TrainingTypeStorage {
     }
 
 
+    public Map<String, TrainingType> getAllByName() {
+        Map<String, TrainingType> typesByName = new HashMap<>();
+        for (TrainingType type : storage.values()) {
+            typesByName.put(type.getName(), type);
+        }
+        return Collections.unmodifiableMap(typesByName);
+    }
 }

@@ -1,34 +1,52 @@
 package com.gym.crm.Loader;
 
-import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.service.TrainingService;
-import com.gym.crm.storage.StorageInitializer;
+import com.gym.crm.storage.TrainingTypeStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
-
 @Component
-public class TrainingLoader {
+public class TrainingLoader implements Loader {
 
-    private final TrainingService trainingService;
+    private TrainingService trainingService;
+    private SeedDataContext context;
+    private TrainingTypeStorage trainingTypeStorage;
+    private final Logger log = LoggerFactory.getLogger(TrainingLoader.class);
 
-    public TrainingLoader(TrainingService trainingService) {
+    @Autowired
+    public void setTrainingService(TrainingService trainingService) {
         this.trainingService = trainingService;
     }
 
-    public void load(List<StorageInitializer.TrainingSeed> trainings,
-                     Map<String, TrainingType> typeMap) {
+    @Autowired
+    public void setContext(SeedDataContext context) {
+        this.context = context;
+    }
 
+    @Autowired
+    public void setTrainingTypeStorage(TrainingTypeStorage trainingTypeStorage) {
+        this.trainingTypeStorage = trainingTypeStorage;
+    }
+
+    @Override
+    public int getOrder() {
+        return 3;
+    }
+
+    public void load() {
+        var trainings = context.getSeedData().getTrainings();
         if (trainings == null) return;
 
-        trainings.forEach( t -> {
-            TrainingType type = typeMap.get(t.getTrainingTypeName());
+        var typeMap = trainingTypeStorage.getAllByName();
 
-            if(type == null){
-                throw new IllegalStateException("Unknown training type: "
-                        + t.getTrainingTypeName());
+        trainings.forEach(t -> {
+            TrainingType type = typeMap.get(t.getTrainingTypeName());
+            if (type == null) {
+                log.error("The given type does not exist.");
+                return;
             }
 
             trainingService.createTraining(
@@ -39,6 +57,8 @@ public class TrainingLoader {
                     t.getTrainingDate(),
                     t.getTrainingDurationMinutes()
             );
+            log.info("Seeded training: {}",t.getTrainingName());
         });
+        log.info("Successfully parsed the trainings.");
     }
 }
