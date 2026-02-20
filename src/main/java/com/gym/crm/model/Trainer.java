@@ -1,5 +1,6 @@
 package com.gym.crm.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -8,7 +9,8 @@ import java.util.Objects;
 
 @Setter
 @Getter
-@ToString
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class Trainer extends User {
     private TrainingType specialization;
 
@@ -20,17 +22,4 @@ public class Trainer extends User {
         super();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        Trainer trainer = (Trainer) o;
-        return Objects.equals(specialization, trainer.specialization);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), specialization);
-    }
 }

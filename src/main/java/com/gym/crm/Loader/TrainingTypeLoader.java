@@ -40,6 +40,7 @@ public class TrainingTypeLoader {
             log.info("Seeded TrainingType: {} (ID={})", name, type.getId());
         }
 
+
         return map;
     }
 

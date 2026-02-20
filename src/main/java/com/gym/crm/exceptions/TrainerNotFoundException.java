@@ -1,4 +1,4 @@
-package com.gym.crm.Exceptions;
+package com.gym.crm.exceptions;
 
 public class TrainerNotFoundException extends RuntimeException {
     private static final String message = "Trainer requested does not exist.";

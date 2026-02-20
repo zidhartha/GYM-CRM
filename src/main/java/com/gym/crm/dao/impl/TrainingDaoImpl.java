@@ -1,11 +1,11 @@
 package com.gym.crm.dao.impl;
 
-import com.gym.crm.Exceptions.TrainingNotFoundException;
 import com.gym.crm.dao.TrainingDao;
 import com.gym.crm.model.Training;
 import com.gym.crm.storage.TrainingStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -15,11 +15,12 @@ import java.util.stream.Collectors;
 
 @Repository
 public class TrainingDaoImpl implements TrainingDao {
-    private final TrainingStorage trainingStorage;
+    private TrainingStorage trainingStorage;
     private static final Logger log = LoggerFactory.getLogger(TrainingDaoImpl.class);
 
 
-    public TrainingDaoImpl(TrainingStorage trainingStorage) {
+    @Autowired
+    public void setTrainingStorage(TrainingStorage trainingStorage){
         this.trainingStorage = trainingStorage;
     }
 
@@ -38,11 +39,10 @@ public class TrainingDaoImpl implements TrainingDao {
     @Override
     public Optional<Training> findById(Long id) {
         Optional<Training> training = Optional.ofNullable(trainingStorage.getStorage().get(id));
-        if (training.isPresent()) {
-            log.info("Training found with id {}", id);
-        } else {
-            log.warn("Training NOT found with id {}", id);
-        }
+        training.ifPresentOrElse(t ->
+            log.info("Training found with id {}",id),
+                () -> log.warn("Training NOT found with id {}", id
+        ));
         return training;
     }
 

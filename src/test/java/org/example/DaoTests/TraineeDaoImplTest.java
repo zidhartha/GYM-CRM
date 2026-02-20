@@ -1,7 +1,7 @@
 package org.example.DaoTests;
 
 
-import com.gym.crm.Exceptions.TraineeNotFoundException;
+import com.gym.crm.exceptions.TraineeNotFoundException;
 import com.gym.crm.dao.impl.TraineeDaoImpl;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.storage.TraineeStorage;
@@ -24,7 +24,8 @@ class TraineeDaoImplTest {
     @BeforeEach
     void setUp() {
         traineeStorage = mock(TraineeStorage.class);
-        traineeDao = new TraineeDaoImpl(traineeStorage);
+        traineeDao = new TraineeDaoImpl();
+        traineeDao.setTraineeStorage(traineeStorage);
     }
 
     @Test
@@ -99,8 +100,10 @@ class TraineeDaoImplTest {
 
     @Test
     void testFindAll() {
-        Trainee t1 = new Trainee(); t1.setId(1L);
-        Trainee t2 = new Trainee(); t2.setId(2L);
+        Trainee t1 = new Trainee();
+        t1.setId(1L);
+        Trainee t2 = new Trainee();
+        t2.setId(2L);
 
         Map<Long, Trainee> storageMap = new HashMap<>();
         storageMap.put(1L, t1);
@@ -115,7 +118,8 @@ class TraineeDaoImplTest {
 
     @Test
     void testDelete() {
-        Trainee t1 = new Trainee(); t1.setId(1L);
+        Trainee t1 = new Trainee();
+        t1.setId(1L);
 
         Map<Long, Trainee> storageMap = new HashMap<>();
         storageMap.put(1L, t1);

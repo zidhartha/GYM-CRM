@@ -1,6 +1,6 @@
 package org.example.ServiceTests;
 
-import com.gym.crm.Exceptions.TrainerNotFoundException;
+import com.gym.crm.exceptions.TrainerNotFoundException;
 import com.gym.crm.Util.IdGenerator;
 import com.gym.crm.Util.PasswordGenerator;
 import com.gym.crm.Util.UsernameGenerator;
@@ -8,9 +8,9 @@ import com.gym.crm.dao.TrainerDao;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.service.TrainerService;
+import com.gym.crm.validators.TrainerValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,19 +25,21 @@ class TrainerServiceTest {
     private PasswordGenerator passwordGenerator;
     private IdGenerator idGenerator;
     private TrainerService trainerService;
-
+    private TrainerValidator trainerValidator;
     @BeforeEach
     void setup() {
         trainerDao = mock(TrainerDao.class);
         usernameGenerator = mock(UsernameGenerator.class);
         passwordGenerator = mock(PasswordGenerator.class);
         idGenerator = mock(IdGenerator.class);
+        trainerValidator = mock(TrainerValidator.class);
 
         trainerService = new TrainerService();
         trainerService.setTrainerDao(trainerDao);
         trainerService.setUsernameGenerator(usernameGenerator);
         trainerService.setPasswordGenerator(passwordGenerator);
         trainerService.setIdGenerator(idGenerator);
+        trainerService.setTrainerValidator(trainerValidator);
     }
 
     @Test
@@ -105,8 +107,10 @@ class TrainerServiceTest {
 
     @Test
     void selectAllTrainers_success() {
-        Trainer t1 = new Trainer(); t1.setId(1L);
-        Trainer t2 = new Trainer(); t2.setId(2L);
+        Trainer t1 = new Trainer();
+        t1.setId(1L);
+        Trainer t2 = new Trainer();
+        t2.setId(2L);
         when(trainerDao.findAll()).thenReturn(List.of(t1, t2));
 
         List<Trainer> result = trainerService.selectAllTrainers();

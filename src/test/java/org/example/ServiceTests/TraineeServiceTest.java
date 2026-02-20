@@ -1,20 +1,19 @@
 package org.example.ServiceTests;
 
 
-import com.gym.crm.Exceptions.TraineeNotFoundException;
+import com.gym.crm.exceptions.TraineeNotFoundException;
 import com.gym.crm.Util.IdGenerator;
 import com.gym.crm.Util.PasswordGenerator;
 import com.gym.crm.Util.UsernameGenerator;
 import com.gym.crm.dao.impl.TraineeDaoImpl;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.service.TraineeService;
+import com.gym.crm.validators.TraineeValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +26,7 @@ class TraineeServiceTest {
     private IdGenerator idGenerator;
     private UsernameGenerator usernameGenerator;
     private PasswordGenerator passwordGenerator;
+    private TraineeValidator traineeValidator;
 
     @BeforeEach
     void setUp() {
@@ -34,12 +34,13 @@ class TraineeServiceTest {
         idGenerator = mock(IdGenerator.class);
         usernameGenerator = mock(UsernameGenerator.class);
         passwordGenerator = mock(PasswordGenerator.class);
-
+        traineeValidator = mock(TraineeValidator.class);
         traineeService = new TraineeService();
         traineeService.setTraineeDao(traineeDao);
         traineeService.setIdGenerator(idGenerator);
         traineeService.setUsernameGenerator(usernameGenerator);
         traineeService.setPasswordGenerator(passwordGenerator);
+        traineeService.setTraineeValidator(traineeValidator);
     }
 
     @Test
@@ -57,7 +58,6 @@ class TraineeServiceTest {
         traineeToSave.setActive(true);
         traineeToSave.setDateOfBirth(LocalDate.of(2000,1,1));
         traineeToSave.setAddress("Tbilisi");
-
         when(traineeDao.save(any(Trainee.class))).thenReturn(traineeToSave);
 
         Trainee result = traineeService.createTrainee(
@@ -90,8 +90,10 @@ class TraineeServiceTest {
 
     @Test
     void testSelectAllTrainees() {
-        Trainee t1 = new Trainee(); t1.setId(1L);
-        Trainee t2 = new Trainee(); t2.setId(2L);
+        Trainee t1 = new Trainee();
+        t1.setId(1L);
+        Trainee t2 = new Trainee();
+        t2.setId(2L);
 
         when(traineeDao.findAll()).thenReturn(Arrays.asList(t1, t2));
 
@@ -101,7 +103,8 @@ class TraineeServiceTest {
 
     @Test
     void testDeleteTrainee_success() {
-        Trainee t = new Trainee(); t.setId(1L);
+        Trainee t = new Trainee();
+        t.setId(1L);
         when(traineeDao.findById(1L)).thenReturn(Optional.of(t));
 
         traineeService.deleteTrainee(1L);
@@ -131,6 +134,10 @@ class TraineeServiceTest {
 
     @Test
     void testCreateTrainee_invalidInput() {
+        doThrow(new IllegalArgumentException("Invalid trainee"))
+                .when(traineeValidator)
+                .validateTrainee(any(),any(),any(),any());
+
         assertThrows(IllegalArgumentException.class, () ->
                 traineeService.createTrainee(null, "Doe", LocalDate.of(2000,1,1), "Tbilisi"));
     }

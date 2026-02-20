@@ -1,4 +1,4 @@
-package com.gym.crm.Exceptions;
+package com.gym.crm.exceptions;
 
 public class TraineeNotFoundException extends RuntimeException{
     public TraineeNotFoundException() {

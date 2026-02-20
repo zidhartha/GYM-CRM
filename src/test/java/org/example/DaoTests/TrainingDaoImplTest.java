@@ -1,13 +1,11 @@
 package org.example.DaoTests;
 
 
-import com.gym.crm.Exceptions.TrainingNotFoundException;
 import com.gym.crm.dao.impl.TrainingDaoImpl;
 import com.gym.crm.model.Training;
 import com.gym.crm.storage.TrainingStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.*;
 
@@ -22,7 +20,8 @@ class TrainingDaoImplTest {
     @BeforeEach
     void setUp() {
         trainingStorage = mock(TrainingStorage.class);
-        trainingDao = new TrainingDaoImpl(trainingStorage);
+        trainingDao = new TrainingDaoImpl();
+        trainingDao.setTrainingStorage(trainingStorage);
     }
 
     @Test
@@ -74,8 +73,10 @@ class TrainingDaoImplTest {
 
     @Test
     void testFindAll() {
-        Training t1 = new Training(); t1.setId(1L);
-        Training t2 = new Training(); t2.setId(2L);
+        Training t1 = new Training();
+        t1.setId(1L);
+        Training t2 = new Training();
+        t2.setId(2L);
 
         Map<Long, Training> storageMap = new HashMap<>();
         storageMap.put(1L, t1);
@@ -90,7 +91,8 @@ class TrainingDaoImplTest {
 
     @Test
     void testDelete() {
-        Training t1 = new Training(); t1.setId(1L);
+        Training t1 = new Training();
+        t1.setId(1L);
 
         Map<Long, Training> storageMap = new HashMap<>();
         storageMap.put(1L, t1);

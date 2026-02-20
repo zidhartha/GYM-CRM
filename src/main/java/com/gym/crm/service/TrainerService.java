@@ -1,6 +1,6 @@
 package com.gym.crm.service;
 
-import com.gym.crm.Exceptions.TrainerNotFoundException;
+import com.gym.crm.exceptions.TrainerNotFoundException;
 import com.gym.crm.Util.IdGenerator;
 import com.gym.crm.Util.PasswordGenerator;
 import com.gym.crm.Util.UsernameGenerator;
@@ -8,6 +8,7 @@ import com.gym.crm.dao.TrainerDao;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
+import com.gym.crm.validators.TrainerValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +28,13 @@ public class TrainerService {
     private UsernameGenerator usernameGenerator;
     private PasswordGenerator passwordGenerator;
     private IdGenerator idGenerator;
+    private TrainerValidator trainervalidator;
 
     @Autowired
-    public void setIdGenerator(IdGenerator idGenerator){
+    public void setIdGenerator(IdGenerator idGenerator) {
         this.idGenerator = idGenerator;
     }
+
     @Autowired
     public void setTrainerDao(TrainerDao trainerDao) {
         this.trainerDao = trainerDao;
@@ -50,6 +53,11 @@ public class TrainerService {
         log.debug("PasswordGenerator injected into TrainerService");
     }
 
+    @Autowired
+    public void setTrainerValidator(TrainerValidator trainervalidator) {
+        this.trainervalidator = trainervalidator;
+    }
+
     @PostConstruct
     public void initIdGenerator() {
         idGenerator.initialize(
@@ -62,7 +70,7 @@ public class TrainerService {
 
     public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         log.info("Creating Trainer profile: {} {}", firstName, lastName);
-        validateTrainerInput(firstName, lastName, specialization);
+        trainervalidator.validateTrainer(firstName, lastName, specialization);
 
         String username = usernameGenerator.generateUsername(firstName, lastName);
         log.info("Generated username: {}", username);
@@ -95,14 +103,13 @@ public class TrainerService {
             log.error("Trainer ID cannot be null for update");
             throw new IllegalArgumentException("Trainer ID cannot be null");
         }
-        validateTrainerInput(firstName, lastName, specialization);
 
         Trainer trainer = trainerDao.findById(id)
                 .orElseThrow(() -> {
                     log.error("Trainer not found with ID: {}", id);
                     return new TrainerNotFoundException("Trainer not found with id: " + id);
                 });
-
+        trainervalidator.validateTrainer(firstName, lastName, specialization);
         log.debug("Found existing Trainer: {} (current username: {})",
                 trainer.getId(), trainer.getUsername());
 
@@ -141,6 +148,7 @@ public class TrainerService {
         log.debug("Found Trainer: {} (username: {})", trainer.getId(), trainer.getUsername());
         return trainer;
     }
+
     public List<Trainer> selectAllTrainers() {
         log.info("Selecting all Trainers");
 
@@ -171,23 +179,6 @@ public class TrainerService {
         return trainer;
     }
 
-
-    private void validateTrainerInput(String firstName, String lastName, TrainingType specialization) {
-        if (firstName == null || firstName.trim().isEmpty()) {
-            log.error("First name validation failed: {}", firstName);
-            throw new IllegalArgumentException("First name cannot be null or empty");
-        }
-        if (lastName == null || lastName.trim().isEmpty()) {
-            log.error("Last name validation failed: {}", lastName);
-            throw new IllegalArgumentException("Last name cannot be null or empty");
-        }
-        if (specialization == null) {
-            log.error("Specialization is null");
-            throw new IllegalArgumentException("Specialization cannot be null");
-        }
-
-        log.debug("Input validation passed for: {} {}", firstName, lastName);
-    }
 
     private Set<String> getAllExistingUsernames() {
         return trainerDao.findAll().stream()

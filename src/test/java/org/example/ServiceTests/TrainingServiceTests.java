@@ -1,12 +1,13 @@
 package org.example.ServiceTests;
 
 
-import com.gym.crm.Exceptions.TrainingNotFoundException;
+import com.gym.crm.exceptions.TrainingNotFoundException;
 import com.gym.crm.Util.IdGenerator;
 import com.gym.crm.dao.TrainingDao;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.service.TrainingService;
+import com.gym.crm.validators.TrainingValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,15 +23,18 @@ class TrainingServiceTests {
     private TrainingDao trainingDao;
     private IdGenerator idGenerator;
     private TrainingService trainingService;
+    private TrainingValidator trainingValidator;
 
     @BeforeEach
     void setup() {
         trainingDao = mock(TrainingDao.class);
         idGenerator = mock(IdGenerator.class);
+        trainingValidator = mock(TrainingValidator.class);
 
         trainingService = new TrainingService();
         trainingService.setTrainingDao(trainingDao);
         trainingService.setIdGenerator(idGenerator);
+        trainingService.setTrainingValidator(trainingValidator);
     }
 
     @Test
@@ -114,6 +118,10 @@ class TrainingServiceTests {
 
     @Test
     void createTraining_invalidInput_shouldThrow() {
+        doThrow(new IllegalArgumentException("Invalid training"))
+                .when(trainingValidator)
+                .validateTraining(any(), any(), any(), any(), any(), anyInt());
+
         TrainingType type = new TrainingType(1L, "Cardio");
 
         assertThrows(IllegalArgumentException.class,

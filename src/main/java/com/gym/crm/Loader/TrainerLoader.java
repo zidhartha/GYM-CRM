@@ -22,12 +22,10 @@ public class TrainerLoader {
 
         if (trainers == null) return;
 
-        for (var t : trainers) {
+        trainers.forEach( t -> {
             TrainingType specialization = typeMap.get(t.getSpecializationName());
-
-            if (specialization == null) {
-                throw new IllegalStateException("Unknown training type: "
-                        + t.getSpecializationName());
+            if(specialization == null){
+                throw new IllegalStateException("Unknown training type: " + specialization);
             }
 
             trainerService.createTrainer(
@@ -35,7 +33,8 @@ public class TrainerLoader {
                     t.getLastName(),
                     specialization
             );
-        }
+        });
+
     }
 }
 

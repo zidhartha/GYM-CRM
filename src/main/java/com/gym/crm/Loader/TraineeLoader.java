@@ -18,14 +18,14 @@ public class TraineeLoader {
     public void load(List<StorageInitializer.TraineeSeed> trainees) {
         if (trainees == null) return;
 
-        for (var t : trainees) {
-            traineeService.createTrainee(
-                    t.getFirstName(),
-                    t.getLastName(),
-                    t.getDateOfBirth(),
-                    t.getAddress()
-            );
-        }
+        trainees.forEach(t ->
+                traineeService.createTrainee(
+                        t.getFirstName(),
+                        t.getLastName(),
+                        t.getDateOfBirth(),
+                        t.getAddress()
+                )
+        );
     }
 }
 

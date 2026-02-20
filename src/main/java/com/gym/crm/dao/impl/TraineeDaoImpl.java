@@ -1,11 +1,12 @@
 package com.gym.crm.dao.impl;
 
-import com.gym.crm.Exceptions.TraineeNotFoundException;
+import com.gym.crm.exceptions.TraineeNotFoundException;
 import com.gym.crm.dao.TraineeDao;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.storage.TraineeStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -14,13 +15,15 @@ import java.util.Optional;
 
 @Repository
 public class TraineeDaoImpl implements TraineeDao {
-    private final TraineeStorage traineeStorage;
+    private TraineeStorage traineeStorage;
     private static final Logger log = LoggerFactory.getLogger(TraineeDaoImpl.class);
 
 
-    public TraineeDaoImpl(TraineeStorage traineeStorage) {
+    
+    @Autowired
+    public void setTraineeStorage(TraineeStorage traineeStorage){
         this.traineeStorage = traineeStorage;
-    }
+        }
 
     @Override
     public Trainee save(Trainee trainee) {
@@ -39,23 +42,21 @@ public class TraineeDaoImpl implements TraineeDao {
         }
         Long id = trainee.getId();
         log.info("Updating the trainee with the id {}", id);
-        if (traineeStorage.getStorage().containsKey(id)) {
-            traineeStorage.getStorage().put(id, trainee);
-            log.info("Successfully updated the trainee with the id {}", id);
-            return trainee;
+        if (!traineeStorage.getStorage().containsKey(id)) {
+            log.warn("The trainee with the id {} does not exist", id);
+            throw new TraineeNotFoundException();
         }
-        log.warn("The trainee with the id {} does not exist", id);
-        throw new TraineeNotFoundException();
+        traineeStorage.getStorage().put(id, trainee);
+        log.info("Successfully updated the trainee with the id {}", id);
+        return trainee;
     }
 
     @Override
     public Optional<Trainee> findById(Long id) {
         Optional<Trainee> trainee = Optional.ofNullable(traineeStorage.getStorage().get(id));
-        if (trainee.isPresent()) {
-            log.info("Trainee found with id {}", id);
-        } else {
-            log.warn("Trainee NOT found with id {}", id);
-        }
+        trainee.ifPresentOrElse(t -> log.info("Trainee found with id {}",id),
+                () -> log.warn("Trainee NOT found with id {}", id));
+
         return trainee;
     }
 

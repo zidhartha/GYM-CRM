@@ -1,11 +1,11 @@
 package com.gym.crm.service;
 
-import com.gym.crm.Exceptions.TrainingNotFoundException;
+import com.gym.crm.exceptions.TrainingNotFoundException;
 import com.gym.crm.Util.IdGenerator;
 import com.gym.crm.dao.TrainingDao;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
-import com.gym.crm.model.User;
+import com.gym.crm.validators.TrainingValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,12 @@ public class TrainingService {
 
     private TrainingDao trainingDao;
     private IdGenerator idGenerator;
+    private TrainingValidator trainingValidator;
 
+    @Autowired
+    public void setTrainingValidator(TrainingValidator trainingValidator){
+        this.trainingValidator = trainingValidator;
+    }
     @Autowired
     public void setIdGenerator(IdGenerator idGenerator){
         this.idGenerator = idGenerator;
@@ -50,7 +55,7 @@ public class TrainingService {
                 trainingName, traineeId, trainerId);
 
 
-        validateTrainingInput(traineeId, trainerId, trainingName, trainingType,
+        trainingValidator.validateTraining(traineeId, trainerId, trainingName, trainingType,
                 trainingDate, duration);
 
 
@@ -127,36 +132,5 @@ public class TrainingService {
         log.info("Found {} trainings for trainer {}", trainings.size(), trainerId);
 
         return trainings;
-    }
-
-
-    private void validateTrainingInput(Long traineeId, Long trainerId, String trainingName,
-                                       TrainingType trainingType, LocalDate trainingDate,
-                                       Integer duration) {
-        if (traineeId == null) {
-            log.error("Trainee ID is null");
-            throw new IllegalArgumentException("Trainee ID cannot be null");
-        }
-        if (trainerId == null) {
-            log.error("Trainer ID is null");
-            throw new IllegalArgumentException("Trainer ID cannot be null");
-        }
-        if (trainingName == null || trainingName.trim().isEmpty()) {
-            log.error("Training name validation failed: {}", trainingName);
-            throw new IllegalArgumentException("Training name cannot be null or empty");
-        }
-        if (trainingType == null) {
-            log.error("Training type is null");
-            throw new IllegalArgumentException("Training type cannot be null");
-        }
-        if (trainingDate == null) {
-            log.error("Training date is null");
-            throw new IllegalArgumentException("Training date cannot be null");
-        }
-        if (duration == null || duration <= 0) {
-            log.error("Duration validation failed: {}", duration);
-            throw new IllegalArgumentException("Duration must be positive");
-        }
-        log.debug("Input validation passed for training: {}", trainingName);
     }
 }

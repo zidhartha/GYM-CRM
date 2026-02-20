@@ -1,5 +1,6 @@
 package com.gym.crm.Loader;
 
+import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.service.TrainingService;
 import com.gym.crm.storage.StorageInitializer;
@@ -22,10 +23,10 @@ public class TrainingLoader {
 
         if (trainings == null) return;
 
-        for (var t : trainings) {
+        trainings.forEach( t -> {
             TrainingType type = typeMap.get(t.getTrainingTypeName());
 
-            if (type == null) {
+            if(type == null){
                 throw new IllegalStateException("Unknown training type: "
                         + t.getTrainingTypeName());
             }
@@ -38,6 +39,6 @@ public class TrainingLoader {
                     t.getTrainingDate(),
                     t.getTrainingDurationMinutes()
             );
-        }
+        });
     }
 }

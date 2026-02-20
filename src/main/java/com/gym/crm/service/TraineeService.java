@@ -1,11 +1,12 @@
 package com.gym.crm.service;
 
-import com.gym.crm.Exceptions.TraineeNotFoundException;
+import com.gym.crm.exceptions.TraineeNotFoundException;
 import com.gym.crm.Util.IdGenerator;
 import com.gym.crm.Util.PasswordGenerator;
 import com.gym.crm.Util.UsernameGenerator;
 import com.gym.crm.dao.impl.TraineeDaoImpl;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.validators.TraineeValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +25,16 @@ public class TraineeService {
     private UsernameGenerator usernameGenerator;
     private TraineeDaoImpl traineeDao;
     private IdGenerator idGenerator;
-
+    private TraineeValidator traineeValidator;
     @Autowired
     public void setIdGenerator(IdGenerator idGenerator){
         this.idGenerator = idGenerator;
         log.debug("IdGenerator injected into TraineeService");
+    }
+
+    @Autowired
+    public void setTraineeValidator(TraineeValidator traineeValidator){
+        this.traineeValidator = traineeValidator;
     }
 
     @PostConstruct
@@ -63,7 +69,7 @@ public class TraineeService {
                                  LocalDate dateOfBirth, String address) {
         log.info("Creating a new Trainee: {} {}", firstName, lastName);
 
-        validateTraineeInput(firstName, lastName, dateOfBirth, address);
+        traineeValidator.validateTrainee(firstName, lastName, dateOfBirth, address);
 
         String username = usernameGenerator.generateUsername(firstName, lastName);
         log.info("Generated username: {}", username);
@@ -96,7 +102,7 @@ public class TraineeService {
         if (id == null) {
             throw new IllegalArgumentException("Trainee ID cannot be null");
         }
-        validateTraineeInput(firstName, lastName, dateOfBirth, address);
+        traineeValidator.validateTrainee(firstName, lastName, dateOfBirth, address);
 
         Trainee trainee = traineeDao.findById(id)
                 .orElseThrow(() -> {
@@ -155,30 +161,5 @@ public class TraineeService {
         List<Trainee> trainees = traineeDao.findAll();
         log.info("Found {} trainees", trainees.size());
         return trainees;
-    }
-
-
-    private void validateTraineeInput(String firstName, String lastName,
-                                      LocalDate dateOfBirth, String address) {
-        if (firstName == null || firstName.trim().isEmpty()) {
-            log.error("First name cannot be null or empty");
-            throw new IllegalArgumentException("First name cannot be null or empty");
-        }
-        if (lastName == null || lastName.trim().isEmpty()) {
-            log.error("Last name cannot be null or empty");
-            throw new IllegalArgumentException("Last name cannot be null or empty");
-        }
-        if (dateOfBirth == null) {
-            log.error("Date of birth cannot be null");
-            throw new IllegalArgumentException("Date of birth cannot be null");
-        }
-        if (dateOfBirth.isAfter(LocalDate.now())) {
-            log.error("Date of birth cannot be in the future");
-            throw new IllegalArgumentException("Date of birth cannot be in the future");
-        }
-        if (address == null || address.trim().isEmpty()) {
-            log.error("Address cannot be null or empty");
-            throw new IllegalArgumentException("Address cannot be null or empty");
-        }
     }
 }

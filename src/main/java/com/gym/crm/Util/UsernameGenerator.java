@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class UsernameGenerator {
@@ -47,13 +48,11 @@ public class UsernameGenerator {
     public Set<String> getAllUsernames(){
         Set<String> usernames = new HashSet<>();
         usernames.addAll(
-                trainerDao.findAll().stream()
-                        .map(Trainer::getUsername).
-                        collect(Collectors.toSet()));
-
-        usernames.addAll(traineeDao.findAll().stream()
-                .map(Trainee::getUsername).
-                collect(Collectors.toSet()));
+                Stream.concat(
+                        trainerDao.findAll().stream().map(Trainer::getUsername),
+                        traineeDao.findAll().stream().map(Trainee::getUsername)
+                ).collect(Collectors.toSet())
+        );
 
         return usernames;
     }
