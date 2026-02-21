@@ -178,11 +178,4 @@ public class TrainerService {
         log.debug("Found Trainer with ID: {}", trainer.getId());
         return trainer;
     }
-
-
-    private Set<String> getAllExistingUsernames() {
-        return trainerDao.findAll().stream()
-                .map(Trainer::getUsername)
-                .collect(Collectors.toSet());
-    }
 }
