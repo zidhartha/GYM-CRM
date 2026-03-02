@@ -1,44 +1,37 @@
 package com.gym.crm.Loader;
 
+import com.gym.crm.Repository.TrainingTypeRepository;
 import com.gym.crm.model.TrainingType;
-import com.gym.crm.storage.TrainingTypeStorage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.gym.crm.storage.StorageInitializer.SeedData;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class TrainingTypeLoader implements Loader {
 
-    private TrainingTypeStorage trainingTypeStorage;
-    private SeedDataContext context;
-    private final Logger log = LoggerFactory.getLogger(TrainingTypeLoader.class);
+    private final TrainingTypeRepository trainingTypeRepository;
+    private List<String> trainingTypes;
 
-    @Autowired
-    public void setTrainingTypeStorage(TrainingTypeStorage trainingTypeStorage) {
-        this.trainingTypeStorage = trainingTypeStorage;
-    }
-
-    @Autowired
-    public void setContext(SeedDataContext context) {
-        this.context = context;
+    public void setTrainingTypes(List<String> trainingTypes) {
+        this.trainingTypes = trainingTypes;
     }
 
     @Override
-    public int getOrder() { return 1; }
+    public int getOrder() {
+        return 2;
+    }
 
     @Override
     public void load() {
-        var trainingTypes = context.getSeedData().getTrainingTypes();
-        if (trainingTypes == null || trainingTypes.isEmpty()) {
-            log.warn("No training types to load");
-            return;
-        }
 
-        trainingTypes.forEach(name -> {
-            TrainingType type = trainingTypeStorage.addTrainingType(name);
-            log.info("Seeded TrainingType: {} id={}", type.getName(), type.getId());
-        });
-        log.info("Successfully parsed all of the Training Types.");
+        if (trainingTypes == null) return;
+
+        for (String typeName : trainingTypes) {
+            trainingTypeRepository.save(new TrainingType(typeName));
+        }
     }
 }

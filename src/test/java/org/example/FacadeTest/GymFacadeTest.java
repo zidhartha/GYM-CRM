@@ -1,168 +1,446 @@
 package org.example.FacadeTest;
 
+import com.gym.crm.dto.TraineeDto;
+import com.gym.crm.dto.TraineeUpdateDto;
+import com.gym.crm.dto.TrainerDto;
+import com.gym.crm.dto.TrainerUpdateDto;
+import com.gym.crm.dto.TrainingDto;
+import com.gym.crm.dto.LoginRequestDto;
 import com.gym.crm.facade.GymFacade;
-import com.gym.crm.model.*;
-import com.gym.crm.Util.IdGenerator;
+import com.gym.crm.model.Trainee;
+import com.gym.crm.model.Trainer;
+import com.gym.crm.model.Training;
+import com.gym.crm.model.TrainingType;
+import com.gym.crm.model.User;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
+import com.gym.crm.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class GymFacadeTest {
 
-    @Mock
-    private TraineeService traineeService;
+    @Mock private TraineeService traineeService;
+    @Mock private TrainerService trainerService;
+    @Mock private TrainingService trainingService;
+    @Mock private UserService userService;
 
-    @Mock
-    private TrainerService trainerService;
-
-    @Mock
-    private TrainingService trainingService;
-
-    @InjectMocks
-    private GymFacade gymFacade;
+    @InjectMocks private GymFacade gymFacade;
 
     private Trainee trainee;
     private Trainer trainer;
-    private TrainingType trainingType;
     private Training training;
+    private TrainingType trainingType;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        trainingType = new TrainingType("Yoga");
+        trainingType.setId(1L);
 
-        trainingType = new TrainingType(1L, "Strength");
-        trainee = new Trainee();
+        User traineeUser = new User("John", "Doe", "John.Doe", "pass");
+        trainee = new Trainee(traineeUser, LocalDate.of(1990, 1, 1), "123 Main St");
         trainee.setId(1L);
-        trainee.setFirstName("dato");
-        trainee.setLastName("jincharadze");
-        trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
-        trainee.setAddress("Tbilisi");
 
-        trainer = new Trainer();
-        trainer.setId(1L);
-        trainer.setFirstName("ikako");
-        trainer.setLastName("deisadze");
-        trainer.setSpecialization(trainingType);
+        User trainerUser = new User("Jane", "Smith", "Jane.Smith", "pass");
+        trainer = new Trainer(trainerUser, trainingType);
+        trainer.setId(2L);
 
-        training = new Training();
-        training.setId(1L);
-        training.setTraineeId(trainee.getId());
-        training.setTrainerId(trainer.getId());
-        training.setTrainingType(trainingType);
-        training.setTrainingName("cardio");
-        training.setTrainingDate(LocalDate.now());
-        training.setTrainingDuration(60);
+        training = new Training(trainee, trainer, trainingType, "Morning Yoga",
+                LocalDate.of(2024, 6, 1), 60L);
+        training.setId(3L);
+    }
+
+    // AUTHENTICATE
+
+    @Test
+    void authenticate_shouldDelegateToUserService() {
+        gymFacade.authenticate("John.Doe", "pass");
+
+        verify(userService).authenticate(any(LoginRequestDto.class));
     }
 
     @Test
-    void createTraineeDelegatesToTraineeService() {
-        when(traineeService.createTrainee(anyString(), anyString(), any(), anyString())).thenReturn(trainee);
+    void authenticate_shouldThrowWhenUserServiceThrows() {
+        doThrow(new IllegalArgumentException("Invalid password"))
+                .when(userService).authenticate(any(LoginRequestDto.class));
 
-        Trainee result = gymFacade.createTrainee("dato", "jincharadze", LocalDate.of(2000, 1, 1), "Tbilisi");
+        assertThatThrownBy(() -> gymFacade.authenticate("John.Doe", "wrongPass"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid password");
+    }
 
-        assertNotNull(result);
-        assertEquals(trainee.getId(), result.getId());
-        verify(traineeService, times(1)).createTrainee("dato", "jincharadze", LocalDate.of(2000, 1, 1), "Tbilisi");
+    // CREATE TRAINEE
+
+    @Test
+    void createTrainee_shouldDelegateToTraineeService() {
+        when(traineeService.createTrainee(any(TraineeDto.class))).thenReturn(trainee);
+
+        Trainee result = gymFacade.createTrainee("John", "Doe",
+                LocalDate.of(1990, 1, 1), "123 Main St");
+
+        assertThat(result).isNotNull();
+        assertThat(result.getUser().getUsername()).isEqualTo("John.Doe");
+        verify(traineeService).createTrainee(any(TraineeDto.class));
+        verifyNoInteractions(userService);
+    }
+
+    // SELECT TRAINEE
+
+    @Test
+    void selectTrainee_shouldAuthenticateAndReturnTrainee() {
+        when(traineeService.getTraineeByUsername("John.Doe")).thenReturn(trainee);
+
+        Trainee result = gymFacade.selectTrainee("John.Doe", "pass", "John.Doe");
+
+        assertThat(result).isNotNull();
+        assertThat(result.getUser().getUsername()).isEqualTo("John.Doe");
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(traineeService).getTraineeByUsername("John.Doe");
     }
 
     @Test
-    void createTrainerDelegatesToTrainerService() {
-        when(trainerService.createTrainer(anyString(), anyString(), any())).thenReturn(trainer);
+    void selectTrainee_shouldThrowWhenAuthFails() {
+        doThrow(new IllegalArgumentException("Invalid password"))
+                .when(userService).authenticate(any(LoginRequestDto.class));
 
-        Trainer result = gymFacade.createTrainer("gio", "janelidze", trainingType);
+        assertThatThrownBy(() -> gymFacade.selectTrainee("John.Doe", "wrongPass", "John.Doe"))
+                .isInstanceOf(IllegalArgumentException.class);
 
-        assertNotNull(result);
-        assertEquals(trainer.getId(), result.getId());
-        verify(trainerService, times(1)).createTrainer("gio", "janelidze", trainingType);
+        verify(traineeService, never()).getTraineeByUsername(any());
+    }
+
+    // UPDATE TRAINEE
+
+    @Test
+    void updateTrainee_shouldAuthenticateAndUpdate() {
+        when(traineeService.updateTraineeProfile(any(TraineeUpdateDto.class), eq("John.Doe")))
+                .thenReturn(trainee);
+
+        Trainee result = gymFacade.updateTrainee("John.Doe", "pass",
+                "New Address", LocalDate.of(1990, 1, 1));
+
+        assertThat(result).isNotNull();
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(traineeService).updateTraineeProfile(any(TraineeUpdateDto.class), eq("John.Doe"));
     }
 
     @Test
-    void createTrainingDelegatesToTrainingService() {
-        when(trainingService.createTraining(anyLong(), anyLong(), anyString(), any(), any(), anyInt()))
-                .thenReturn(training);
+    void updateTrainee_shouldThrowWhenAuthFails() {
+        doThrow(new IllegalArgumentException("Invalid password"))
+                .when(userService).authenticate(any(LoginRequestDto.class));
+
+        assertThatThrownBy(() ->
+                gymFacade.updateTrainee("John.Doe", "wrongPass", "Address", LocalDate.now()))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(traineeService, never()).updateTraineeProfile(any(), any());
+    }
+
+    // DELETE TRAINEE
+
+    @Test
+    void deleteTrainee_shouldAuthenticateAndDelete() {
+        gymFacade.deleteTrainee("John.Doe", "pass");
+
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(traineeService).deleteTrainee("John.Doe");
+    }
+
+    @Test
+    void deleteTrainee_shouldThrowWhenAuthFails() {
+        doThrow(new IllegalArgumentException("Invalid password"))
+                .when(userService).authenticate(any(LoginRequestDto.class));
+
+        assertThatThrownBy(() -> gymFacade.deleteTrainee("John.Doe", "wrongPass"))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(traineeService, never()).deleteTrainee(any());
+    }
+
+    // CHANGE TRAINEE PASSWORD
+
+    @Test
+    void changeTraineePassword_shouldAuthenticateWithOldPasswordThenUpdate() {
+        gymFacade.changeTraineePassword("John.Doe", "oldPass", "newPass");
+
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(userService).updatePassword("John.Doe", "newPass");
+    }
+
+    @Test
+    void changeTraineePassword_shouldThrowWhenOldPasswordWrong() {
+        doThrow(new IllegalArgumentException("Invalid password"))
+                .when(userService).authenticate(any(LoginRequestDto.class));
+
+        assertThatThrownBy(() ->
+                gymFacade.changeTraineePassword("John.Doe", "wrongOld", "newPass"))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(userService, never()).updatePassword(any(), any());
+    }
+
+    // TOGGLE TRAINEE ACTIVE
+
+    @Test
+    void toggleTraineeActive_shouldAuthenticateAndToggle() {
+        gymFacade.toggleTraineeActive("John.Doe", "pass");
+
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(userService).updateActiveStatus("John.Doe");
+    }
+
+    // MATCH TRAINEE CREDENTIALS
+
+    @Test
+    void matchTraineeCredentials_shouldReturnTrueWhenValid() {
+        boolean result = gymFacade.matchTraineeCredentials("John.Doe", "pass");
+
+        assertThat(result).isTrue();
+        verify(userService).authenticate(any(LoginRequestDto.class));
+    }
+
+    @Test
+    void matchTraineeCredentials_shouldReturnFalseWhenInvalid() {
+        doThrow(new IllegalArgumentException("Invalid password"))
+                .when(userService).authenticate(any(LoginRequestDto.class));
+
+        boolean result = gymFacade.matchTraineeCredentials("John.Doe", "wrongPass");
+
+        assertThat(result).isFalse();
+    }
+
+    // GET TRAINEE TRAININGS
+
+    @Test
+    void getTraineeTrainings_shouldAuthenticateAndReturnList() {
+        when(trainingService.getTraineeTrainings(eq("John.Doe"), any(), any(), any(), any()))
+                .thenReturn(List.of(training));
+
+        List<Training> result = gymFacade.getTraineeTrainings(
+                "John.Doe", "pass", null, null, null, null);
+
+        assertThat(result).hasSize(1).containsExactly(training);
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(trainingService).getTraineeTrainings(eq("John.Doe"), any(), any(), any(), any());
+    }
+
+    // GET UNASSIGNED TRAINERS
+
+    @Test
+    void getUnassignedTrainers_shouldAuthenticateAndReturnList() {
+        when(trainerService.getUnassignedTrainers("John.Doe")).thenReturn(List.of(trainer));
+
+        List<Trainer> result = gymFacade.getUnassignedTrainers("John.Doe", "pass");
+
+        assertThat(result).hasSize(1).containsExactly(trainer);
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(trainerService).getUnassignedTrainers("John.Doe");
+    }
+
+    // UPDATE TRAINEE TRAINERS
+
+    @Test
+    void updateTraineeTrainers_shouldAuthenticateAndUpdate() {
+        when(traineeService.updateTraineeTrainers("John.Doe", List.of("Jane.Smith")))
+                .thenReturn(trainee);
+
+        Trainee result = gymFacade.updateTraineeTrainers(
+                "John.Doe", "pass", List.of("Jane.Smith"));
+
+        assertThat(result).isNotNull();
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(traineeService).updateTraineeTrainers("John.Doe", List.of("Jane.Smith"));
+    }
+
+    // CREATE TRAINER
+
+    @Test
+    void createTrainer_shouldDelegateToTrainerService() {
+        when(trainerService.createTrainer(any(TrainerDto.class))).thenReturn(trainer);
+
+        Trainer result = gymFacade.createTrainer("Jane", "Smith", "Yoga");
+
+        assertThat(result).isNotNull();
+        assertThat(result.getUser().getUsername()).isEqualTo("Jane.Smith");
+        verify(trainerService).createTrainer(any(TrainerDto.class));
+        verifyNoInteractions(userService);
+    }
+
+    // SELECT TRAINER
+
+    @Test
+    void selectTrainer_shouldAuthenticateAndReturnTrainer() {
+        when(trainerService.getTrainerByUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
+
+        Trainer result = gymFacade.selectTrainer("Jane.Smith", "pass", "Jane.Smith");
+
+        assertThat(result).isNotNull();
+        assertThat(result.getUser().getUsername()).isEqualTo("Jane.Smith");
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(trainerService).getTrainerByUsername("Jane.Smith");
+    }
+
+    @Test
+    void selectTrainer_shouldThrowWhenTrainerNotFound() {
+        when(trainerService.getTrainerByUsername("ghost")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> gymFacade.selectTrainer("Jane.Smith", "pass", "ghost"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ghost");
+    }
+
+    // UPDATE TRAINER
+
+    @Test
+    void updateTrainer_shouldAuthenticateAndUpdate() {
+        when(trainerService.updateTrainer(any(TrainerUpdateDto.class), eq("Jane.Smith")))
+                .thenReturn(trainer);
+
+        Trainer result = gymFacade.updateTrainer("Jane.Smith", "pass", "Pilates");
+
+        assertThat(result).isNotNull();
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(trainerService).updateTrainer(any(TrainerUpdateDto.class), eq("Jane.Smith"));
+    }
+
+    // CHANGE TRAINER PASSWORD
+
+    @Test
+    void changeTrainerPassword_shouldAuthenticateWithOldPasswordThenUpdate() {
+        gymFacade.changeTrainerPassword("Jane.Smith", "oldPass", "newPass");
+
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(userService).updatePassword("Jane.Smith", "newPass");
+    }
+
+    @Test
+    void changeTrainerPassword_shouldThrowWhenOldPasswordWrong() {
+        doThrow(new IllegalArgumentException("Invalid password"))
+                .when(userService).authenticate(any(LoginRequestDto.class));
+
+        assertThatThrownBy(() ->
+                gymFacade.changeTrainerPassword("Jane.Smith", "wrongOld", "newPass"))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(userService, never()).updatePassword(any(), any());
+    }
+
+    // TOGGLE TRAINER ACTIVE
+
+    @Test
+    void toggleTrainerActive_shouldAuthenticateAndToggle() {
+        gymFacade.toggleTrainerActive("Jane.Smith", "pass");
+
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(userService).updateActiveStatus("Jane.Smith");
+    }
+
+    // MATCH TRAINER CREDENTIALS
+
+    @Test
+    void matchTrainerCredentials_shouldReturnTrueWhenValid() {
+        boolean result = gymFacade.matchTrainerCredentials("Jane.Smith", "pass");
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void matchTrainerCredentials_shouldReturnFalseWhenInvalid() {
+        doThrow(new IllegalArgumentException("Invalid password"))
+                .when(userService).authenticate(any(LoginRequestDto.class));
+
+        boolean result = gymFacade.matchTrainerCredentials("Jane.Smith", "wrongPass");
+
+        assertThat(result).isFalse();
+    }
+
+    // GET TRAINER TRAININGS
+
+    @Test
+    void getTrainerTrainings_shouldAuthenticateAndReturnList() {
+        when(trainingService.getTrainerTrainings(eq("Jane.Smith"), any(), any(), any()))
+                .thenReturn(List.of(training));
+
+        List<Training> result = gymFacade.getTrainerTrainings(
+                "Jane.Smith", "pass", null, null, null);
+
+        assertThat(result).hasSize(1).containsExactly(training);
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(trainingService).getTrainerTrainings(eq("Jane.Smith"), any(), any(), any());
+    }
+
+    // CREATE TRAINING
+
+    @Test
+    void createTraining_shouldAuthenticateTraineeAndCreate() {
+        when(trainingService.createTraining(any(TrainingDto.class))).thenReturn(training);
 
         Training result = gymFacade.createTraining(
-                trainee.getId(),
-                trainer.getId(),
-                "cardio",
-                trainingType,
-                LocalDate.now(),
-                60
-        );
+                "John.Doe", "pass", "Jane.Smith",
+                "Morning Yoga", "Yoga",
+                LocalDate.of(2024, 6, 1), 60L);
 
-        assertNotNull(result);
-        assertEquals(training.getId(), result.getId());
-        verify(trainingService, times(1))
-                .createTraining(trainee.getId(), trainer.getId(), "cardio", trainingType, training.getTrainingDate(), 60);
+        assertThat(result).isNotNull();
+        assertThat(result.getTrainingName()).isEqualTo("Morning Yoga");
+        verify(userService).authenticate(any(LoginRequestDto.class));
+        verify(trainingService).createTraining(any(TrainingDto.class));
     }
 
     @Test
-    void selectTraineeDelegatesToTraineeService() {
-        when(traineeService.select(anyLong())).thenReturn(trainee);
+    void createTraining_shouldThrowWhenAuthFails() {
+        doThrow(new IllegalArgumentException("Invalid password"))
+                .when(userService).authenticate(any(LoginRequestDto.class));
 
-        Trainee result = gymFacade.selectTrainee(1L);
+        assertThatThrownBy(() -> gymFacade.createTraining(
+                "John.Doe", "wrongPass", "Jane.Smith",
+                "Morning Yoga", "Yoga",
+                LocalDate.of(2024, 6, 1), 60L))
+                .isInstanceOf(IllegalArgumentException.class);
 
-        assertEquals(trainee.getId(), result.getId());
-        verify(traineeService, times(1)).select(1L);
+        verify(trainingService, never()).createTraining(any());
     }
 
-    @Test
-    void selectTrainerDelegatesToTrainerService() {
-        when(trainerService.selectTrainer(anyLong())).thenReturn(trainer);
-
-        Trainer result = gymFacade.selectTrainer(1L);
-
-        assertEquals(trainer.getId(), result.getId());
-        verify(trainerService, times(1)).selectTrainer(1L);
-    }
+    // SELECT ALL
 
     @Test
-    void selectTrainingDelegatesToTrainingService() {
-        when(trainingService.selectTraining(anyLong())).thenReturn(training);
-
-        Training result = gymFacade.selectTraining(1L);
-
-        assertEquals(training.getId(), result.getId());
-        verify(trainingService, times(1)).selectTraining(1L);
-    }
-
-    @Test
-    void selectAllTraineesDelegates() {
+    void selectAllTrainees_shouldReturnAll() {
         when(traineeService.selectAllTrainees()).thenReturn(List.of(trainee));
 
         List<Trainee> result = gymFacade.selectAllTrainees();
 
-        assertEquals(1, result.size());
-        verify(traineeService, times(1)).selectAllTrainees();
+        assertThat(result).hasSize(1).containsExactly(trainee);
     }
 
     @Test
-    void selectAllTrainersDelegates() {
+    void selectAllTrainers_shouldReturnAll() {
         when(trainerService.selectAllTrainers()).thenReturn(List.of(trainer));
 
         List<Trainer> result = gymFacade.selectAllTrainers();
 
-        assertEquals(1, result.size());
-        verify(trainerService, times(1)).selectAllTrainers();
+        assertThat(result).hasSize(1).containsExactly(trainer);
     }
 
     @Test
-    void selectAllTrainingsDelegates() {
+    void selectAllTrainings_shouldReturnAll() {
         when(trainingService.selectAllTrainings()).thenReturn(List.of(training));
 
         List<Training> result = gymFacade.selectAllTrainings();
 
-        assertEquals(1, result.size());
-        verify(trainingService, times(1)).selectAllTrainings();
+        assertThat(result).hasSize(1).containsExactly(training);
     }
 }
-

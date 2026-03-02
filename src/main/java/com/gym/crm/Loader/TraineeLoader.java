@@ -1,44 +1,37 @@
 package com.gym.crm.Loader;
 
+import com.gym.crm.dto.TraineeDto;
 import com.gym.crm.service.TraineeService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+
+import java.util.List;
+
+
 @Component
+@RequiredArgsConstructor
 public class TraineeLoader implements Loader {
 
-    private TraineeService traineeService;
-    private SeedDataContext context;
-    private final Logger log = LoggerFactory.getLogger(TraineeLoader.class);
+    private final TraineeService traineeService;
+    private List<TraineeDto> trainees;
 
-    @Autowired
-    public void setTraineeService(TraineeService traineeService) {
-        this.traineeService = traineeService;
-    }
-    @Autowired
-    public void setContext(SeedDataContext context) {
-        this.context = context;
+    public void setTrainees(List<TraineeDto> trainees) {
+        this.trainees = trainees;
     }
 
     @Override
-    public int getOrder() { return 2; }
+    public int getOrder() {
+        return 3;
+    }
 
     @Override
+
     public void load() {
-        var trainees = context.getSeedData().getTrainees();
-        if (trainees == null || trainees.isEmpty()) {
-            log.warn("No trainees to load.");
-            return;
-        }
 
-        trainees.forEach(t -> {
-            traineeService.createTrainee(
-                    t.getFirstName(), t.getLastName(), t.getDateOfBirth(), t.getAddress()
-            );
-            log.info("Seeded Trainee: {} {}", t.getFirstName(), t.getLastName());
-        });
-        log.info("Successfully parsed all of the Trainees.");
+        if (trainees == null) return;
+        for (TraineeDto dto : trainees) {
+            traineeService.createTrainee(dto);
+        }
     }
 }

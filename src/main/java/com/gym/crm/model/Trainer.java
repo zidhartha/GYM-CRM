@@ -1,25 +1,41 @@
 package com.gym.crm.model;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import jakarta.persistence.*;
+import lombok.*;
 
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Setter
 @Getter
 @ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
-public class Trainer extends User {
+@EqualsAndHashCode()
+@NoArgsConstructor
+
+@Entity
+@Table(name="trainer")
+public class Trainer{
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="trainer_id")
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "specialization", nullable = false)
     private TrainingType specialization;
 
-    public Trainer(Long id, String firstName, String lastName, String username, String password, boolean isActive,TrainingType specialization) {
-        super(id, firstName, lastName, username, password, isActive);
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
+
+    @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Training> trainings = new ArrayList<>();
+
+    public Trainer(User user, TrainingType specialization) {
+        this.user = user;
         this.specialization = specialization;
-    }
-    public Trainer(){
-        super();
     }
 
 }
