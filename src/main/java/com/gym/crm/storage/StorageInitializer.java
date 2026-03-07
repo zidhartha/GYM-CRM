@@ -2,106 +2,74 @@ package com.gym.crm.storage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.gym.crm.Loader.Loader;
-import com.gym.crm.Loader.SeedDataContext;
+import com.gym.crm.Loader.*;
+import com.gym.crm.Repository.*;
+import com.gym.crm.dto.TraineeDto;
+import com.gym.crm.dto.TrainerDto;
+import com.gym.crm.dto.TrainingDto;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
-import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.io.InputStream;
 import java.util.Comparator;
 import java.util.List;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class StorageInitializer {
+    private final TrainingTypeRepository trainingTypeRepository;
+    private final List<Loader> loaders;
 
-    private final Logger log = LoggerFactory.getLogger(StorageInitializer.class);
+    @Value("${seed.file.path}")
+    private Resource seedFile;
+    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
-    private  SeedDataContext seedDataContext;
-    private  List<Loader> loaders;
-
-    @Value("${data.storage}")
-    private Resource dataFile;
-
-    private final ObjectMapper mapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
-
-    @Autowired
-    public void setSeedDataContext(SeedDataContext seedDataContext){
-        this.seedDataContext = seedDataContext;
-    }
-
-    @Autowired
-    public void setLoaders(List<Loader> loaders){
-        this.loaders = loaders;
-    }
-
+    @Getter
+    private SeedData seedData;
 
     @PostConstruct
     public void init() {
-        try (InputStream is = dataFile.getInputStream()) {
-            SeedData data = mapper.readValue(is, SeedData.class);
-            seedDataContext.setSeedData(data);
+        boolean alreadySeeded = !trainingTypeRepository.findAll().isEmpty();
+        if (alreadySeeded) {
+            log.info("Database already seeded. skipping");
+            return;
+        }
 
-            log.info("Starting storage instantiation");
-
+        try (InputStream is = seedFile.getInputStream()) {
+            seedData = mapper.readValue(is, SeedData.class);
+            loaders.forEach(l -> log.info("Loader in list: {} @ {}", l.getClass().getSimpleName(), System.identityHashCode(l)));
 
             loaders.stream()
                     .sorted(Comparator.comparingInt(Loader::getOrder))
                     .forEach(loader -> {
-                        log.info("Executing loader: {}", loader.getClass().getSimpleName());
-                        loader.load();
-                        log.info("{} finished successfully", loader.getClass().getSimpleName());
+                        log.info("Running {}", loader.getClass().getSimpleName());
+                        try {
+                            loader.load(seedData);
+                            log.info("Finished {}", loader.getClass().getSimpleName());
+                        } catch (Exception e) {
+                            log.error("FAILED in {}: {}", loader.getClass().getSimpleName(), e.getMessage(), e);
+                            throw new IllegalStateException("Failed to load: " + loader.getClass().getSimpleName(), e);
+                        }
                     });
 
-            log.info("All storage objects successfully initialized.");
+            log.info("Database seeding completed");
+
         } catch (Exception e) {
-            log.error("Storage initialization failed", e);
-            throw new IllegalStateException("Could not initialize storage", e);
+            log.error("Database seeding failed", e);
+            throw new IllegalStateException("Seeding failed", e);
         }
     }
 
-
     @Getter
-    @Setter
     public static class SeedData {
         private List<String> trainingTypes;
-        private List<TraineeSeed> trainees;
-        private List<TrainerSeed> trainers;
-        private List<TrainingSeed> trainings;
-    }
-
-    @Getter
-    @Setter
-    public static class TraineeSeed {
-        private String firstName;
-        private String lastName;
-        private String address;
-        private java.time.LocalDate dateOfBirth;
-    }
-
-    @Getter
-    @Setter
-    public static class TrainerSeed {
-        private String firstName;
-        private String lastName;
-        private String specializationName;
-    }
-
-    @Getter
-    @Setter
-    public static class TrainingSeed {
-        private Long traineeId;
-        private Long trainerId;
-        private String trainingName;
-        private String trainingTypeName;
-        private java.time.LocalDate trainingDate;
-        private Integer trainingDurationMinutes;
+        private List<TraineeDto> trainees;
+        private List<TrainerDto> trainers;
+        private List<TrainingDto> trainings;
     }
 }

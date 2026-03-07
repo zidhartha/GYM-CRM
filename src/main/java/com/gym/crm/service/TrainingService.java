@@ -1,136 +1,112 @@
 package com.gym.crm.service;
 
-import com.gym.crm.exceptions.TrainingNotFoundException;
-import com.gym.crm.Util.IdGenerator;
-import com.gym.crm.dao.TrainingDao;
+import com.gym.crm.Repository.TraineeRepository;
+import com.gym.crm.Repository.TrainerRepository;
+import com.gym.crm.Repository.TrainingRepository;
+import com.gym.crm.Repository.TrainingTypeRepository;
+import com.gym.crm.dto.TrainingDto;
+import com.gym.crm.model.Trainee;
+import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
-import com.gym.crm.validators.TrainingValidator;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
-import javax.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
+@Validated
 @Service
+@RequiredArgsConstructor
 public class TrainingService {
     private static final Logger log = LoggerFactory.getLogger(TrainingService.class);
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
+    private final TrainingTypeRepository trainingTypeRepository;
+    private final TrainingRepository trainingRepository;
 
+    @Transactional
+    public Training createTraining(@Valid TrainingDto dto) {
 
-    private TrainingDao trainingDao;
-    private IdGenerator idGenerator;
-    private TrainingValidator trainingValidator;
+        log.info("Creating training: trainee = {} , trainer = {}, type = {} , duration = {}",
+                dto.getTraineeUsername(),dto.getTrainerUsername(),
+                dto.getTrainingTypeName(),dto.getTrainingDuration());
+        Trainee trainee = traineeRepository
+                .findByUsername(dto.getTraineeUsername())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Trainee with username " + dto.getTraineeUsername() + " not found"));
 
-    @Autowired
-    public void setTrainingValidator(TrainingValidator trainingValidator){
-        this.trainingValidator = trainingValidator;
-    }
-    @Autowired
-    public void setIdGenerator(IdGenerator idGenerator){
-        this.idGenerator = idGenerator;
-    }
-    @Autowired
-    public void setTrainingDao(TrainingDao trainingDao) {
-        this.trainingDao = trainingDao;
-        log.debug("TrainingDao injected into TrainingService");
-    }
+        Trainer trainer = trainerRepository
+                .findByUsername(dto.getTrainerUsername())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Trainer with username " + dto.getTrainerUsername() + " not found"));
 
-    @PostConstruct
-    public void initialize(){
-        idGenerator.initialize(
-                trainingDao.findAll().stream()
-                        .collect(Collectors.toMap(Training::getId, t -> t))
+        TrainingType trainingType = trainingTypeRepository
+                .findByName(dto.getTrainingTypeName())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Training type " + dto.getTrainingTypeName() + " not found"));
+
+        Training training = new Training(
+                trainee,
+                trainer,
+                trainingType,
+                dto.getTrainingName(),
+                dto.getTrainingDate(),
+                dto.getTrainingDuration()
         );
-        log.debug("IdGenerator initialized with existing training IDs");
+
+        Training saved = trainingRepository.save(training);
+
+        log.info("Training created: id={}, trainee={}, trainer={}, type={}, name={}",
+                saved.getId(),
+                trainee.getUser().getUsername(),
+                trainer.getUser().getUsername(),
+                trainingType.getName(),
+                saved.getTrainingName());
+
+        return saved;
     }
 
-    public Training createTraining(Long traineeId, Long trainerId, String trainingName,
-                                   TrainingType trainingType, LocalDate trainingDate,
-                                   Integer duration) {
-        log.info("Creating Training session: {} for trainee {} with trainer {}",
-                trainingName, traineeId, trainerId);
+    @Transactional(readOnly = true)
+    public List<Training> getTraineeTrainings(
+            String traineeUsername,
+            LocalDate from,
+            LocalDate to,
+            String trainerUsername,
+            String trainingType) {
 
-
-        trainingValidator.validateTraining(traineeId, trainerId, trainingName, trainingType,
-                trainingDate, duration);
-
-
-        Training training = new Training();
-        training.setId(idGenerator.generateNextId());
-        training.setTraineeId(traineeId);
-        training.setTrainerId(trainerId);
-        training.setTrainingName(trainingName);
-        training.setTrainingType(trainingType);
-        training.setTrainingDate(trainingDate);
-        training.setTrainingDuration(duration);
-
-
-        Training savedTraining = trainingDao.save(training);
-        log.info("Successfully created Training with ID: {}", savedTraining.getId());
-
-        return savedTraining;
+        return trainingRepository.findTraineeTrainings(
+                traineeUsername, from, to, trainerUsername, trainingType);
     }
 
+    @Transactional(readOnly = true)
+    public List<Training> getTrainerTrainings(
+            String trainerUsername,
+            LocalDate from,
+            LocalDate to,
+            String traineeUsername) {
 
-    public Training selectTraining(Long id) {
-        log.info("Selecting Training with ID: {}", id);
-
-        if (id == null) {
-            log.error("Training ID cannot be null");
-            throw new IllegalArgumentException("Training ID cannot be null");
-        }
-
-        Training training = trainingDao.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Training not found with ID: {}", id);
-                    return new TrainingNotFoundException("Training not found with id: " + id);
-                });
-
-        log.debug("Found Training: {} (name: {})", training.getId(), training.getTrainingName());
-        return training;
+        return trainingRepository.findTrainerTrainings(
+                trainerUsername, from, to, traineeUsername);
     }
 
+    @Transactional(readOnly = true)
+    public List<Training> getTrainerTrainings(
+            String trainerUsername,
+            LocalDate from,
+            LocalDate to) {
 
+        return trainingRepository.findTrainerTrainings(
+                trainerUsername, from, to, null);
+    }
+
+    @Transactional(readOnly = true)
     public List<Training> selectAllTrainings() {
-        log.info("Selecting all Trainings");
-
-        List<Training> trainings = trainingDao.findAll();
-        log.info("Found {} trainings", trainings.size());
-
-        return trainings;
-    }
-
-
-    public List<Training> selectTrainingsByTraineeId(Long traineeId) {
-        log.info("Selecting Trainings for trainee: {}", traineeId);
-
-        if (traineeId == null) {
-            log.error("Trainee ID cannot be null");
-            throw new IllegalArgumentException("Trainee ID cannot be null");
-        }
-
-        List<Training> trainings = trainingDao.findByTraineeId(traineeId);
-        log.info("Found {} trainings for trainee {}", trainings.size(), traineeId);
-
-        return trainings;
-    }
-
-
-    public List<Training> selectTrainingsByTrainerId(Long trainerId) {
-        log.info("Selecting Trainings for trainer: {}", trainerId);
-
-        if (trainerId == null) {
-            log.error("Trainer ID cannot be null");
-            throw new IllegalArgumentException("Trainer ID cannot be null");
-        }
-
-        List<Training> trainings = trainingDao.findByTrainerId(trainerId);
-        log.info("Found {} trainings for trainer {}", trainings.size(), trainerId);
-
-        return trainings;
+        return trainingRepository.findAll();
     }
 }
