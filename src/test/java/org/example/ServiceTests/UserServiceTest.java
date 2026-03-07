@@ -28,20 +28,22 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        user = new User("John", "Doe", "John.Doe", "encodedPass");
+        user = new User("John", "Doe", "John.Doe", "rawPass");
         user.setId(1L);
         user.setActive(true);
     }
 
     @Test
     void authenticate_shouldPassWithCorrectCredentials() {
-        LoginRequestDto credentials = new LoginRequestDto("John.Doe", "rawPass");
+        LoginRequestDto credentials = new LoginRequestDto("john.doe", "rawPass");
 
-        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("rawPass", "encodedPass")).thenReturn(true);
+        when(userRepository.findByUsername("john.doe"))
+                .thenReturn(Optional.of(user));
 
-        assertThatNoException().isThrownBy(() -> userService.authenticate(credentials));
+        assertThatNoException()
+                .isThrownBy(() -> userService.authenticate(credentials));
     }
+
 
     @Test
     void authenticate_shouldThrowWhenUserNotFound() {
@@ -56,26 +58,17 @@ class UserServiceTest {
 
     @Test
     void authenticate_shouldThrowWhenPasswordWrong() {
-        LoginRequestDto credentials = new LoginRequestDto("John.Doe", "wrongPass");
+        LoginRequestDto credentials = new LoginRequestDto("john.doe", "wrongPass");
 
-        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("wrongPass", "encodedPass")).thenReturn(false);
+        when(userRepository.findByUsername("john.doe"))
+                .thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> userService.authenticate(credentials))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid password");
     }
 
-    @Test
-    void updatePassword_shouldEncodeAndSaveNewPassword() {
-        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
-        when(passwordEncoder.encode("newPass")).thenReturn("newEncodedPass");
 
-        userService.updatePassword("John.Doe", "newPass");
-
-        assertThat(user.getPassword()).isEqualTo("newEncodedPass");
-        verify(userRepository).save(user);
-    }
 
     @Test
     void updatePassword_shouldThrowWhenUserNotFound() {

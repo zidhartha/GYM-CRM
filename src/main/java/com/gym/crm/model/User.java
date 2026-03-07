@@ -1,9 +1,6 @@
 package com.gym.crm.model;
-
-
 import jakarta.persistence.*;
 import lombok.*;
-
 
 @Getter
 @Setter
@@ -13,7 +10,6 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="user_id")
@@ -25,7 +21,7 @@ public class User {
     @Column(name="lname",nullable=false,length=55)
     private String lastName;
 
-    @Column(name="username",nullable=false,length=55)
+    @Column(name="username",nullable=false,length=55,unique = true)
     private String username;
 
     @Column(name="password",nullable=false)
@@ -41,8 +37,4 @@ public class User {
         this.password = password;
         this.active = true;
     }
-
-
-
-
 }

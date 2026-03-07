@@ -17,25 +17,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class TraineeServiceTest {
-
     @Mock private TraineeRepository traineeRepository;
     @Mock private TrainerRepository trainerRepository;
     @Mock private PasswordGenerator passwordGenerator;
-    @Mock private PasswordEncoder passwordEncoder;
     @Mock private UsernameGenerator usernameGenerator;
-
     @InjectMocks private TraineeService traineeService;
 
     private Trainee trainee;
@@ -49,18 +42,23 @@ class TraineeServiceTest {
 
     @Test
     void createTrainee_shouldSaveAndReturnTrainee() {
-        TraineeDto dto = buildDto("gio", "jincharadze", LocalDate.of(1990, 1, 1), "123 Main St");
+        TraineeDto dto = buildDto("gio", "jincharadze",
+                LocalDate.of(1990, 1, 1), "123 Main St");
 
         when(passwordGenerator.generatePassword()).thenReturn("rawPass");
-        when(passwordEncoder.encode("rawPass")).thenReturn("encodedPass");
-        when(usernameGenerator.generateUsername("gio", "jincharadze")).thenReturn("gio.jincharadze");
-        when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
+        when(usernameGenerator.generateUsername("gio", "jincharadze"))
+                .thenReturn("gio.jincharadze");
+
+        when(traineeRepository.save(any(Trainee.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Trainee result = traineeService.createTrainee(dto);
 
         assertThat(result.getUser().getUsername()).isEqualTo("gio.jincharadze");
+        assertThat(result.getUser().getPassword()).isEqualTo("rawPass");
         assertThat(result.getAddress()).isEqualTo("123 Main St");
-        verify(traineeRepository).save(any());
+
+        verify(traineeRepository).save(any(Trainee.class));
     }
 
     @Test

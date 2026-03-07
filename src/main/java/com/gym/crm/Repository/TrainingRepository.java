@@ -43,7 +43,7 @@ public interface TrainingRepository extends JpaRepository<Training,Long> {
             @Param("traineeName") String traineeName
     );
 
-    @Query("SELECT t FROM Training t")
+
     List<Training> findAll();
 
 }

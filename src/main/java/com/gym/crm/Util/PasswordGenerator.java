@@ -25,6 +25,7 @@ public class PasswordGenerator {
             sb.append(characters.charAt(index));
         }
 
+        logger.info("Created a new password for the user.");
 
         return sb.toString();
     }

@@ -6,7 +6,9 @@ import com.gym.crm.dto.TrainingDto;
 import com.gym.crm.service.TrainingService;
 
 
+import com.gym.crm.storage.StorageInitializer;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.stereotype.Component;
 
 
@@ -15,13 +17,8 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class TrainingLoader implements Loader {
-
     private final TrainingService trainingService;
-    private List<TrainingDto> trainings;
 
-    public void setTrainings(List<TrainingDto> trainings) {
-        this.trainings = trainings;
-    }
 
     @Override
     public int getOrder() {
@@ -29,10 +26,9 @@ public class TrainingLoader implements Loader {
     }
 
     @Override
-
-    public void load() {
-        if (trainings == null) return;
-        for (TrainingDto dto : trainings) {
+    public void load(StorageInitializer.SeedData seedData) {
+        if (seedData.getTrainings() == null) return;
+        for (TrainingDto dto : seedData.getTrainings()) {
             trainingService.createTraining(dto);
         }
     }

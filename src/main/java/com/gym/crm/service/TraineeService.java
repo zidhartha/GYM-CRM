@@ -13,7 +13,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -24,16 +23,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class TraineeService {
-
     private static final Logger log = LoggerFactory.getLogger(TraineeService.class);
-
-
     private final PasswordGenerator passwordGenerator;
-    private final PasswordEncoder passwordEncoder;
     private final TraineeRepository traineeRepository;
     private final UsernameGenerator usernameGenerator;
     private final TrainerRepository trainerRepository;
-
     @Transactional
     public Trainee createTrainee(@Valid TraineeDto dto) {
         log.info("Creating trainee: {} {}, dob={}, address={}",
@@ -42,12 +36,11 @@ public class TraineeService {
                 dto.getDateOfBirth(),
                 dto.getAddress());
 
-        String rawPassword = passwordGenerator.generatePassword();
         User user = new User(
                 dto.getFirstname(),
                 dto.getLastname(),
                 usernameGenerator.generateUsername(dto.getFirstname(),dto.getLastname()),
-                passwordEncoder.encode(rawPassword)
+                passwordGenerator.generatePassword()
         );
 
         Trainee trainee = new Trainee(
@@ -64,38 +57,6 @@ public class TraineeService {
 
         return saved;
     }
-
-    public Trainee createTrainee(@Valid TraineeDto dto, String rawPassword) {
-        log.info("Creating trainee with given password: {} {}, dob={}, address={}",
-                dto.getFirstname(),
-                dto.getLastname(),
-                dto.getDateOfBirth(),
-                dto.getAddress());
-
-        User user = new User(
-                dto.getFirstname(),
-                dto.getLastname(),
-                usernameGenerator.generateUsername(dto.getFirstname(), dto.getLastname()),
-                passwordEncoder.encode(rawPassword)
-        );
-
-        Trainee trainee = new Trainee(
-                user,
-                dto.getDateOfBirth(),
-                dto.getAddress()
-        );
-
-        Trainee saved = traineeRepository.save(trainee);
-
-        log.info("Trainee created: id={}, username={}",
-                saved.getId(),
-                saved.getUser().getUsername());
-
-        return saved;
-    }
-
-
-
 
     @Transactional
     public Trainee updateTraineeProfile(@Valid TraineeUpdateDto dto, String username) {
@@ -105,14 +66,8 @@ public class TraineeService {
         Trainee trainee = traineeRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Trainee with username " + username + " not found"));
-
-        if (dto.getAddress() != null) {
             trainee.setAddress(dto.getAddress());
-        }
-
-        if (dto.getDateOfBirth() != null) {
             trainee.setDateOfBirth(dto.getDateOfBirth());
-        }
 
         Trainee updated = traineeRepository.save(trainee);
 

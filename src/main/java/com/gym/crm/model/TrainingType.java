@@ -1,8 +1,6 @@
 package com.gym.crm.model;
-
 import jakarta.persistence.*;
 import lombok.*;
-
 
 @Getter
 @Setter

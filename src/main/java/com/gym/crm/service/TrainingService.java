@@ -24,9 +24,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class TrainingService {
-
     private static final Logger log = LoggerFactory.getLogger(TrainingService.class);
-
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
     private final TrainingTypeRepository trainingTypeRepository;
@@ -95,6 +93,16 @@ public class TrainingService {
 
         return trainingRepository.findTrainerTrainings(
                 trainerUsername, from, to, traineeUsername);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Training> getTrainerTrainings(
+            String trainerUsername,
+            LocalDate from,
+            LocalDate to) {
+
+        return trainingRepository.findTrainerTrainings(
+                trainerUsername, from, to, null);
     }
 
     @Transactional(readOnly = true)

@@ -4,11 +4,8 @@ import com.gym.crm.model.Trainer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.List;
 import java.util.Optional;
-
-
 public interface TrainerRepository extends JpaRepository<Trainer,Long>{
 
     @Query("SELECT t from Trainer t where t.user.username = :username")

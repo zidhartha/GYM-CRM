@@ -22,7 +22,6 @@ import java.util.Properties;
 @EnableJpaRepositories(basePackages = "com.gym.crm.Repository")
 @PropertySource("classpath:application.properties")
 public class PersistenceConfig {
-
     @Value("${spring.datasource.url}")
     private String url;
 
@@ -48,9 +47,9 @@ public class PersistenceConfig {
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
-        emf.setDataSource(dataSource());
+        emf.setDataSource(dataSource);
         emf.setPackagesToScan("com.gym.crm.model");
         emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 

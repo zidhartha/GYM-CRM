@@ -13,7 +13,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -27,14 +26,12 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class TrainerService {
-
     private static final Logger log = LoggerFactory.getLogger(TrainerService.class);
-
     private final PasswordGenerator passwordGenerator;
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainerRepository trainerRepository;
-    private final PasswordEncoder passwordEncoder;
     private final UsernameGenerator usernameGenerator;
+
     @Transactional
     public Trainer createTrainer(@Valid TrainerDto dto) {
 
@@ -42,12 +39,12 @@ public class TrainerService {
                 dto.getFirstname(),
                 dto.getLastname(),
                 dto.getSpecialization());
-        String rawPassword = passwordGenerator.generatePassword();
+
         User user = new User(
                 dto.getFirstname(),
                 dto.getLastname(),
                 usernameGenerator.generateUsername(dto.getFirstname(),dto.getLastname()),
-                passwordEncoder.encode(rawPassword)
+                passwordGenerator.generatePassword()
         );
         TrainingType trainingType = trainingTypeRepository
                 .findByName(dto.getSpecialization())
@@ -66,7 +63,6 @@ public class TrainerService {
         return saved;
     }
 
-
     @Transactional
     public Trainer createTrainer(@Valid TrainerDto dto, String rawPassword) {
         log.info("Creating trainer with given password: {} {}, specialization={}",
@@ -78,7 +74,7 @@ public class TrainerService {
                 dto.getFirstname(),
                 dto.getLastname(),
                 usernameGenerator.generateUsername(dto.getFirstname(), dto.getLastname()),
-                passwordEncoder.encode(rawPassword)
+                rawPassword
         );
 
         System.out.println(">>> Trainer " + dto.getFirstname() + "." + dto.getLastname() + " : password = " + rawPassword);
@@ -99,8 +95,6 @@ public class TrainerService {
 
         return saved;
     }
-
-
 
     @Transactional(readOnly = true)
     public Optional<Trainer> getTrainerByUsername(String username) {
@@ -127,15 +121,12 @@ public class TrainerService {
                 .orElseThrow(() -> new NoSuchElementException(
                         "Trainer with username " + username + " not found"));
 
-        if (dto.getSpecialization() != null) {
-
             TrainingType specialization = trainingTypeRepository
                     .findByName(dto.getSpecialization())
                     .orElseThrow(() -> new NoSuchElementException(
                             "Training type not found: " + dto.getSpecialization()));
 
             trainer.setSpecialization(specialization);
-        }
 
         Trainer updated = trainerRepository.save(trainer);
 

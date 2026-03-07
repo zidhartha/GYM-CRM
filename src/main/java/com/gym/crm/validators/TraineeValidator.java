@@ -10,7 +10,6 @@ import java.time.LocalDate;
 public class TraineeValidator {
     private final Logger log = LoggerFactory.getLogger(TrainerValidator.class);
 
-
     public void validateTrainee(String firstName, String lastName,
                                  LocalDate dateOfBirth, String address) {
         if (firstName == null || firstName.trim().isEmpty()) {

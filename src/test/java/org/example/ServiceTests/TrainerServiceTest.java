@@ -28,13 +28,10 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TrainerServiceTest {
-
     @Mock private TrainerRepository trainerRepository;
     @Mock private TrainingTypeRepository trainingTypeRepository;
     @Mock private PasswordGenerator passwordGenerator;
-    @Mock private PasswordEncoder passwordEncoder;
     @Mock private UsernameGenerator usernameGenerator;
-
     @InjectMocks private TrainerService trainerService;
 
     private Trainer trainer;
@@ -52,17 +49,26 @@ class TrainerServiceTest {
     @Test
     void createTrainer_shouldSaveAndReturnTrainer() {
         TrainerDto dto = buildDto("dato", "jincharadze", "Yoga");
+
+        TrainingType trainingType = new TrainingType(1L, "Yoga");
+
         when(passwordGenerator.generatePassword()).thenReturn("rawPass");
-        when(passwordEncoder.encode("rawPass")).thenReturn("encodedPass");
-        when(usernameGenerator.generateUsername("dato", "jincharadze")).thenReturn("dato.jincharadze");
-        when(trainingTypeRepository.findByName("Yoga")).thenReturn(Optional.of(trainingType));
-        when(trainerRepository.save(any())).thenReturn(trainer);
+        when(usernameGenerator.generateUsername("dato", "jincharadze"))
+                .thenReturn("dato.jincharadze");
+        when(trainingTypeRepository.findByName("Yoga"))
+                .thenReturn(Optional.of(trainingType));
+
+        when(trainerRepository.save(any(Trainer.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Trainer result = trainerService.createTrainer(dto);
 
         assertThat(result.getUser().getUsername()).isEqualTo("dato.jincharadze");
+        assertThat(result.getUser().getPassword()).isEqualTo("rawPass");
         assertThat(result.getSpecialization().getName()).isEqualTo("Yoga");
-        verify(trainerRepository).save(any());
+
+        verify(trainingTypeRepository).findByName("Yoga");
+        verify(trainerRepository).save(any(Trainer.class));
     }
 
     @Test
@@ -76,7 +82,6 @@ class TrainerServiceTest {
         verify(trainerRepository, never()).save(any());
     }
 
-    // ----- RETRIEVAL -----
     @Test
     void getTrainerByUsername_shouldReturnTrainer() {
         when(trainerRepository.findByUsername("dato.jincharadze")).thenReturn(Optional.of(trainer));

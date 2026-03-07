@@ -28,7 +28,6 @@ public class Training {
     @JoinColumn(name = "trainer_id", nullable = false)
     private Trainer trainer;
 
-
     @Column(name="training_name",nullable = false)
     private String trainingName;
 

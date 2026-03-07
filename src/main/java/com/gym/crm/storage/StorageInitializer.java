@@ -14,8 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.io.InputStream;
 import java.util.Comparator;
 import java.util.List;
@@ -24,17 +22,11 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class StorageInitializer {
-
-    private final TrainingRepository trainingRepository;
-    private final TrainerRepository trainerRepository;
-    private final TraineeRepository traineeRepository;
     private final TrainingTypeRepository trainingTypeRepository;
-    private final UserRepository userRepository;
     private final List<Loader> loaders;
 
     @Value("${seed.file.path}")
     private Resource seedFile;
-
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Getter
@@ -42,37 +34,26 @@ public class StorageInitializer {
 
     @PostConstruct
     public void init() {
-
-        if (trainingTypeRepository.count() > 15) {
-            log.info("Database already seeded — skipping");
+        boolean alreadySeeded = !trainingTypeRepository.findAll().isEmpty();
+        if (alreadySeeded) {
+            log.info("Database already seeded. skipping");
             return;
         }
-
 
         try (InputStream is = seedFile.getInputStream()) {
             seedData = mapper.readValue(is, SeedData.class);
             loaders.forEach(l -> log.info("Loader in list: {} @ {}", l.getClass().getSimpleName(), System.identityHashCode(l)));
-            for (Loader loader : loaders) {
-                if (loader instanceof TrainingTypeLoader l) {
-                    l.setTrainingTypes(seedData.getTrainingTypes());
-                } else if (loader instanceof TraineeLoader l) {
-                    l.setTrainees(seedData.getTrainees());
-                } else if (loader instanceof TrainerLoader l) {
-                    l.setTrainers(seedData.getTrainers());
-                } else if (loader instanceof TrainingLoader l) {
-                    l.setTrainings(seedData.getTrainings());
-                }
-            }
 
             loaders.stream()
                     .sorted(Comparator.comparingInt(Loader::getOrder))
                     .forEach(loader -> {
                         log.info("Running {}", loader.getClass().getSimpleName());
                         try {
-                            loader.load();
+                            loader.load(seedData);
                             log.info("Finished {}", loader.getClass().getSimpleName());
                         } catch (Exception e) {
                             log.error("FAILED in {}: {}", loader.getClass().getSimpleName(), e.getMessage(), e);
+                            throw new IllegalStateException("Failed to load: " + loader.getClass().getSimpleName(), e);
                         }
                     });
 
@@ -83,7 +64,6 @@ public class StorageInitializer {
             throw new IllegalStateException("Seeding failed", e);
         }
     }
-
 
     @Getter
     public static class SeedData {

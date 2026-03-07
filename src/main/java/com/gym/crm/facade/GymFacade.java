@@ -23,12 +23,10 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class GymFacade {
-
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final TrainingService trainingService;
     private final UserService userService;
-
 
     public void authenticate(String username, String password) {
         log.info("Authenticating user: {}", username);
@@ -38,23 +36,15 @@ public class GymFacade {
 
     public Trainee createTrainee(String firstName, String lastName, LocalDate dateOfBirth, String address) {
         log.info("Facade: createTrainee {} {}", firstName, lastName);
-        TraineeDto dto = new TraineeDto();
-        dto.setFirstname(firstName);
-        dto.setLastname(lastName);
-        dto.setDateOfBirth(dateOfBirth);
-        dto.setAddress(address);
+        TraineeDto dto = TraineeDto.builder()
+                .firstname(firstName)
+                .lastname(lastName)
+                .dateOfBirth(dateOfBirth)
+                .address(address)
+                .build();
         return traineeService.createTrainee(dto);
     }
 
-    public Trainee createTraineeWithPassword(String firstName,String lastName, LocalDate dateOfBirth, String address,String password){
-        log.info("Facade: createTrainee {} {}", firstName, lastName);
-        TraineeDto dto = new TraineeDto();
-        dto.setFirstname(firstName);
-        dto.setLastname(lastName);
-        dto.setDateOfBirth(dateOfBirth);
-        dto.setAddress(address);
-        return traineeService.createTrainee(dto,password);
-    }
 
     public Trainee selectTrainee(String authenticatedUsername, String password, String targetUsername) {
         authenticate(authenticatedUsername, password);
@@ -71,13 +61,11 @@ public class GymFacade {
         return traineeService.updateTraineeProfile(updateDto, username);
     }
 
-
     public void changeTraineePassword(String username, String oldPassword, String newPassword) {
         authenticate(username, oldPassword);
         log.info("Facade: changeTraineePassword {}", username);
         userService.updatePassword(username, newPassword);
     }
-
 
     public void toggleTraineeActive(String username, String password) {
         authenticate(username, password);
@@ -92,7 +80,6 @@ public class GymFacade {
         traineeService.deleteTrainee(username);
     }
 
-
     public boolean matchTraineeCredentials(String username, String password) {
         log.info("Facade: matchTraineeCredentials {}", username);
         try {
@@ -104,7 +91,6 @@ public class GymFacade {
         }
     }
 
-
     public List<Training> getTraineeTrainings(String username, String password,
                                               LocalDate from, LocalDate to,
                                               String trainerUsername, String trainingType) {
@@ -113,13 +99,11 @@ public class GymFacade {
         return trainingService.getTraineeTrainings(username, from, to, trainerUsername, trainingType);
     }
 
-
     public List<Trainer> getUnassignedTrainers(String username, String password) {
         authenticate(username, password);
         log.info("Facade: getUnassignedTrainers for trainee {}", username);
         return trainerService.getUnassignedTrainers(username);
     }
-
 
     public Trainee updateTraineeTrainers(String username, String password, List<String> trainerUsernames) {
         authenticate(username, password);
@@ -127,26 +111,15 @@ public class GymFacade {
         return traineeService.updateTraineeTrainers(username, trainerUsernames);
     }
 
-
     public Trainer createTrainer(String firstName, String lastName, String specialization) {
         log.info("Facade: createTrainer {} {}", firstName, lastName);
-        TrainerDto dto = new TrainerDto();
-        dto.setFirstname(firstName);
-        dto.setLastname(lastName);
-        dto.setSpecialization(specialization);
+        TrainerDto dto = TrainerDto.builder()
+                .firstname(firstName)
+                .lastname(lastName)
+                .specialization(specialization)
+                .build();
         return trainerService.createTrainer(dto);
     }
-
-
-    public Trainer createTrainerWithPassword(String firstName, String lastName, String specialization,String password){
-        log.info("Facade: createTrainer {} {}", firstName, lastName);
-        TrainerDto dto = new TrainerDto();
-        dto.setFirstname(firstName);
-        dto.setLastname(lastName);
-        dto.setSpecialization(specialization);
-        return trainerService.createTrainer(dto,password);
-    }
-
 
     public Trainer selectTrainer(String authenticatedUsername, String password, String targetUsername) {
         authenticate(authenticatedUsername, password);
@@ -154,7 +127,6 @@ public class GymFacade {
         return trainerService.getTrainerByUsername(targetUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Trainer not found: " + targetUsername));
     }
-
 
     public Trainer updateTrainer(String username, String password, String specialization) {
         authenticate(username, password);
@@ -194,22 +166,30 @@ public class GymFacade {
         return trainingService.getTrainerTrainings(username, from, to, traineeUsername);
     }
 
+    public List<Training> getTrainerTrainings(String username, String password,
+                                              LocalDate from, LocalDate to) {
+        authenticate(username, password);
+        log.info("Facade: getTrainerTrainings for {}", username);
+        return trainingService.getTrainerTrainings(username, from, to,null);
+    }
+
     public Training createTraining(String traineeUsername, String traineePassword,
                                    String trainerUsername, String trainingName,
                                    String trainingTypeName, LocalDate trainingDate,
                                    Long durationMinutes) {
         authenticate(traineeUsername, traineePassword);
         log.info("Facade: createTraining trainee={} trainer={}", traineeUsername, trainerUsername);
-        TrainingDto dto = new TrainingDto();
-        dto.setTraineeUsername(traineeUsername);
-        dto.setTrainerUsername(trainerUsername);
-        dto.setTrainingName(trainingName);
-        dto.setTrainingTypeName(trainingTypeName);
-        dto.setTrainingDate(trainingDate);
-        dto.setTrainingDuration(durationMinutes);
+        TrainingDto dto = TrainingDto.builder()
+                .traineeUsername(traineeUsername)
+                .trainerUsername(trainerUsername)
+                .trainingName(trainingName)
+                .trainingTypeName(trainingTypeName)
+                .trainingDate(trainingDate)
+                .trainingDuration(durationMinutes)
+                .build();
+
         return trainingService.createTraining(dto);
     }
-
 
     public List<Trainee> selectAllTrainees() {
         return traineeService.selectAllTrainees();
