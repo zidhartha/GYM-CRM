@@ -16,11 +16,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-
 
 @Validated
 @Service
@@ -31,7 +29,6 @@ public class TrainerService {
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainerRepository trainerRepository;
     private final UsernameGenerator usernameGenerator;
-
     @Transactional
     public Trainer createTrainer(@Valid TrainerDto dto) {
 
@@ -101,7 +98,7 @@ public class TrainerService {
 
         log.info("Fetching trainer: {}", username);
 
-        return trainerRepository.findByUsername(username);
+        return trainerRepository.findByUserUsername(username);
     }
 
     @Transactional(readOnly = true)
@@ -117,22 +114,26 @@ public class TrainerService {
 
         log.info("Updating trainer: {}", username);
 
-        Trainer trainer = trainerRepository.findByUsername(username)
+        Trainer trainer = trainerRepository.findByUserUsername(username)
                 .orElseThrow(() -> new NoSuchElementException(
                         "Trainer with username " + username + " not found"));
+        User user = trainer.getUser();
+        TrainingType specialization = trainingTypeRepository
+                .findByName(dto.getSpecialization())
+                .orElseThrow(() ->
+                        new NoSuchElementException("Training type not found: " + dto.getSpecialization()));
 
-            TrainingType specialization = trainingTypeRepository
-                    .findByName(dto.getSpecialization())
-                    .orElseThrow(() -> new NoSuchElementException(
-                            "Training type not found: " + dto.getSpecialization()));
-
-            trainer.setSpecialization(specialization);
-
+        trainer.setSpecialization(specialization);
+        if (dto.getPassword() != null) user.setPassword(dto.getPassword());
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
         Trainer updated = trainerRepository.save(trainer);
 
-        log.info("Trainer updated: username={}, specialization={}",
+        log.info("Trainer updated: username={}, specialization={},firstname={},lastname={}",
                 updated.getUser().getUsername(),
-                updated.getSpecialization());
+                updated.getSpecialization().getName(),
+                updated.getUser().getFirstName(),
+                updated.getUser().getLastName());
 
         return updated;
     }

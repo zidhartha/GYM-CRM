@@ -53,8 +53,8 @@ class TrainingServiceTests {
     void createTraining_shouldSaveAndReturnTraining() {
         TrainingDto dto = buildDto("dato.jincharadze", "gio.jincharadze", "Yoga",
                 "Morning Yoga", LocalDate.of(2024,6,1), 60L);
-        when(traineeRepository.findByUsername("dato.jincharadze")).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUsername("gio.jincharadze")).thenReturn(Optional.of(trainer));
+        when(traineeRepository.findByUserUsername("dato.jincharadze")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserUsername("gio.jincharadze")).thenReturn(Optional.of(trainer));
         when(trainingTypeRepository.findByName("Yoga")).thenReturn(Optional.of(trainingType));
         when(trainingRepository.save(any())).thenReturn(training);
 
@@ -68,22 +68,22 @@ class TrainingServiceTests {
     @Test
     void createTraining_shouldThrowWhenEntitiesNotFound() {
         TrainingDto dto = buildDto("ghost", "gio.jincharadze", "Yoga", null, null, null);
-        when(traineeRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+        when(traineeRepository.findByUserUsername("ghost")).thenReturn(Optional.empty());
         assertThatThrownBy(() -> trainingService.createTraining(dto))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("ghost");
 
         dto.setTraineeUsername("dato.jincharadze");
         dto.setTrainerUsername("ghost");
-        when(traineeRepository.findByUsername("dato.jincharadze")).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+        when(traineeRepository.findByUserUsername("dato.jincharadze")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserUsername("ghost")).thenReturn(Optional.empty());
         assertThatThrownBy(() -> trainingService.createTraining(dto))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("ghost");
 
         dto.setTrainerUsername("gio.jincharadze");
         dto.setTrainingTypeName("InvalidType");
-        when(trainerRepository.findByUsername("gio.jincharadze")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findByUserUsername("gio.jincharadze")).thenReturn(Optional.of(trainer));
         when(trainingTypeRepository.findByName("InvalidType")).thenReturn(Optional.empty());
         assertThatThrownBy(() -> trainingService.createTraining(dto))
                 .isInstanceOf(IllegalArgumentException.class)

@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -37,12 +36,12 @@ public class TrainingService {
                 dto.getTraineeUsername(),dto.getTrainerUsername(),
                 dto.getTrainingTypeName(),dto.getTrainingDuration());
         Trainee trainee = traineeRepository
-                .findByUsername(dto.getTraineeUsername())
+                .findByUserUsername(dto.getTraineeUsername())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Trainee with username " + dto.getTraineeUsername() + " not found"));
 
         Trainer trainer = trainerRepository
-                .findByUsername(dto.getTrainerUsername())
+                .findByUserUsername(dto.getTrainerUsername())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Trainer with username " + dto.getTrainerUsername() + " not found"));
 

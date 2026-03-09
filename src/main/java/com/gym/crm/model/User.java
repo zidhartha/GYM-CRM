@@ -15,10 +15,10 @@ public class User {
     @Column(name="user_id")
     private Long id;
 
-    @Column(name="fname",nullable=false,length=55)
+    @Column(name="f_name",nullable=false,length=55)
     private String firstName;
 
-    @Column(name="lname",nullable=false,length=55)
+    @Column(name="l_name",nullable=false,length=55)
     private String lastName;
 
     @Column(name="username",nullable=false,length=55,unique = true)

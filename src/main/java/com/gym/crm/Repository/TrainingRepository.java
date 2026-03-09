@@ -1,18 +1,13 @@
 package com.gym.crm.Repository;
 
-
 import com.gym.crm.model.Training;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.time.LocalDate;
 import java.util.List;
 
-
 public interface TrainingRepository extends JpaRepository<Training,Long> {
-
-
     @Query(
             "SELECT t FROM Training t WHERE " +
                     "t.trainee.user.username = :traineeUsername " +
@@ -42,7 +37,6 @@ public interface TrainingRepository extends JpaRepository<Training,Long> {
             @Param("toDate") LocalDate toDate,
             @Param("traineeName") String traineeName
     );
-
 
     List<Training> findAll();
 

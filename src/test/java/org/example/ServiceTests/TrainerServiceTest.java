@@ -84,7 +84,7 @@ class TrainerServiceTest {
 
     @Test
     void getTrainerByUsername_shouldReturnTrainer() {
-        when(trainerRepository.findByUsername("dato.jincharadze")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findByUserUsername("dato.jincharadze")).thenReturn(Optional.of(trainer));
 
         Optional<Trainer> result = trainerService.getTrainerByUsername("dato.jincharadze");
 
@@ -94,7 +94,7 @@ class TrainerServiceTest {
 
     @Test
     void getTrainerByUsername_shouldReturnEmptyWhenNotFound() {
-        when(trainerRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+        when(trainerRepository.findByUserUsername("ghost")).thenReturn(Optional.empty());
 
         Optional<Trainer> result = trainerService.getTrainerByUsername("ghost");
         assertThat(result).isEmpty();
@@ -108,7 +108,7 @@ class TrainerServiceTest {
         TrainerUpdateDto dto = new TrainerUpdateDto();
         dto.setSpecialization("Pilates");
 
-        when(trainerRepository.findByUsername("dato.jincharadze")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findByUserUsername("dato.jincharadze")).thenReturn(Optional.of(trainer));
         when(trainingTypeRepository.findByName("Pilates")).thenReturn(Optional.of(newType));
         when(trainerRepository.save(trainer)).thenReturn(trainer);
 
@@ -121,7 +121,7 @@ class TrainerServiceTest {
     void updateTrainer_shouldThrowWhenTrainerNotFound() {
         TrainerUpdateDto dto = new TrainerUpdateDto();
         dto.setSpecialization("Yoga");
-        when(trainerRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+        when(trainerRepository.findByUserUsername("ghost")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> trainerService.updateTrainer(dto, "ghost"))
                 .isInstanceOf(NoSuchElementException.class)
@@ -133,7 +133,7 @@ class TrainerServiceTest {
     void updateTrainer_shouldThrowWhenNewTrainingTypeNotFound() {
         TrainerUpdateDto dto = new TrainerUpdateDto();
         dto.setSpecialization("InvalidType");
-        when(trainerRepository.findByUsername("dato.jincharadze")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findByUserUsername("dato.jincharadze")).thenReturn(Optional.of(trainer));
         when(trainingTypeRepository.findByName("InvalidType")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> trainerService.updateTrainer(dto, "dato.jincharadze"))

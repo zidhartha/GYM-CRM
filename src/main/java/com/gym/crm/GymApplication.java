@@ -7,72 +7,80 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-
 import java.time.LocalDate;
 import java.util.List;
 
 public class GymApplication {
 
     public static void main(String[] args) {
-        ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
-        GymFacade gym = context.getBean(GymFacade.class);
+        try (AnnotationConfigApplicationContext context =
+                     new AnnotationConfigApplicationContext(AppConfig.class)) {
 
-        Trainer trainer = gym.createTrainer("dato", "jincharadze", "Yoga");
-        Trainee trainee = gym.createTrainee(
-                "sandro", "qochiashvili",
-                LocalDate.of(2006, 3, 4),
-                "zastava"
-        );
+            GymFacade gym = context.getBean(GymFacade.class);
 
-        System.out.println("Trainer: " + trainer.getUser().getUsername());
-        System.out.println("Trainer password: " + trainer.getUser().getPassword());
-        System.out.println("Trainee: " + trainee.getUser().getUsername());
-        System.out.println("Trainee password: " + trainee.getUser().getPassword());
+            try {
+                Trainer trainer = gym.createTrainer("dato", "jincharadze", "Yoga");
+                Trainee trainee = gym.createTrainee(
+                        "sandro", "qochiashvili",
+                        LocalDate.of(2006, 3, 4),
+                        "zastava"
+                );
 
-        String traineeUsername = trainee.getUser().getUsername();
-        String trainerUsername = trainer.getUser().getUsername();
-        String traineePassword = trainee.getUser().getPassword();
-        String trainerPassword = trainer.getUser().getPassword();
-        Trainee foundTrainee = gym.selectTrainee(traineeUsername, traineePassword, traineeUsername);
-        Trainer foundTrainer = gym.selectTrainer(trainerUsername, trainerPassword, trainerUsername);
+                System.out.println("Trainer: " + trainer.getUser().getUsername());
+                System.out.println("Trainer password: " + trainer.getUser().getPassword());
+                System.out.println("Trainee: " + trainee.getUser().getUsername());
+                System.out.println("Trainee password: " + trainee.getUser().getPassword());
 
-        System.out.println("Selected trainee: " + foundTrainee.getUser().getUsername());
-        System.out.println("Selected trainer: " + foundTrainer.getUser().getUsername());
+                String traineeUsername = trainee.getUser().getUsername();
+                String trainerUsername = trainer.getUser().getUsername();
+                String traineePassword = trainee.getUser().getPassword();
+                String trainerPassword = trainer.getUser().getPassword();
 
-        gym.updateTrainee(traineeUsername, traineePassword, "safichxia", LocalDate.of(1995, 4, 20));
-        gym.updateTrainer(trainerUsername, trainerPassword, "CrossFit");
+                Trainee foundTrainee = gym.selectTrainee(traineeUsername, traineePassword, traineeUsername);
+                Trainer foundTrainer = gym.selectTrainer(trainerUsername, trainerPassword, trainerUsername);
 
-        gym.toggleTraineeActive(traineeUsername, traineePassword);
-        gym.toggleTrainerActive(trainerUsername, trainerPassword);
+                System.out.println("Selected trainee: " + foundTrainee.getUser().getUsername());
+                System.out.println("Selected trainer: " + foundTrainer.getUser().getUsername());
 
-        List<Trainer> unassigned = gym.getUnassignedTrainers(traineeUsername, traineePassword);
-        System.out.println("Unassigned trainers: " + unassigned.size());
+                gym.updateTrainee(traineeUsername, traineePassword, "sandro", "qochiashvili", "safichxia", LocalDate.of(1995, 4, 20));
+                gym.updateTrainer(trainerUsername, trainerPassword, "dato", "jincharadze", "CrossFit");
 
-        gym.updateTraineeTrainers(traineeUsername, traineePassword, List.of(trainerUsername));
+                gym.activateStatus(traineeUsername, traineePassword);
+                gym.activateStatus(trainerUsername, trainerPassword);
 
-        Training training = gym.createTraining(
-                traineeUsername, traineePassword,
-                trainerUsername,
-                "Power Session", "Strength Training",
-                LocalDate.of(2025, 6, 1), 60L
-        );
-        System.out.println("Training created: " + training.getTrainingName());
+                List<Trainer> unassigned = gym.getUnassignedTrainers(traineeUsername, traineePassword);
+                System.out.println("Unassigned trainers: " + unassigned.size());
 
-        LocalDate from = LocalDate.of(2025, 1, 1);
-        LocalDate to = LocalDate.of(2025, 12, 31);
+                gym.updateTraineeTrainers(traineeUsername, traineePassword, List.of(trainerUsername));
 
-        List<Training> traineeTrainings = gym.getTraineeTrainings(traineeUsername, traineePassword, from, to, null, null);
-        System.out.println("Trainee trainings: " + traineeTrainings.size());
+                Training training = gym.createTraining(
+                        traineeUsername, traineePassword,
+                        trainerUsername,
+                        "Power Session", "Strength Training",
+                        LocalDate.of(2025, 6, 1), 60L
+                );
+                System.out.println("Training created: " + training.getTrainingName());
 
-        List<Training> trainerTrainings = gym.getTrainerTrainings(trainerUsername, trainerPassword, from, to);
-        System.out.println("Trainer trainings: " + trainerTrainings.size());
+                LocalDate from = LocalDate.of(2025, 1, 1);
+                LocalDate to = LocalDate.of(2025, 12, 31);
 
-        gym.changeTraineePassword(traineeUsername, traineePassword, "axaliparoli");
-        gym.changeTrainerPassword(trainerUsername, trainerPassword, "axaliparoli");
+                List<Training> traineeTrainings = gym.getTraineeTrainings(traineeUsername, traineePassword, from, to, null, null);
+                System.out.println("Trainee trainings: " + traineeTrainings.size());
 
-        int before = gym.selectAllTrainings().size();
-        gym.deleteTrainee(traineeUsername, "axaliparoli");
-        int after = gym.selectAllTrainings().size();
-        System.out.println("Trainee deleted. Trainings removed by cascade: " + (before - after));
+                List<Training> trainerTrainings = gym.getTrainerTrainings(trainerUsername, trainerPassword, from, to);
+                System.out.println("Trainer trainings: " + trainerTrainings.size());
+
+                gym.changeTraineePassword(traineeUsername, traineePassword, "axaliparoli");
+                gym.changeTrainerPassword(trainerUsername, trainerPassword, "axaliparoli");
+
+                int before = gym.selectAllTrainings().size();
+                gym.deleteTrainee(traineeUsername, "axaliparoli");
+                int after = gym.selectAllTrainings().size();
+                System.out.println("Trainee deleted. Trainings removed by cascade: " + (before - after));
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

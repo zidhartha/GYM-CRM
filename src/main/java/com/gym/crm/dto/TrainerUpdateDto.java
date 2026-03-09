@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TrainerUpdateDto {
+    private String firstName;
+    private String lastName;
+    private String password;
     @NotBlank(message="Trainers specialization is required.")
     private String specialization;
 }

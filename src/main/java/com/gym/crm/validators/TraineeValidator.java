@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Component
 public class TraineeValidator {
-    private final Logger log = LoggerFactory.getLogger(TrainerValidator.class);
+    private final Logger log = LoggerFactory.getLogger(TraineeValidator.class);
 
     public void validateTrainee(String firstName, String lastName,
                                  LocalDate dateOfBirth, String address) {

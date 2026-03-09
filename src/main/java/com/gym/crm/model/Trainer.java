@@ -20,7 +20,7 @@ public class Trainer{
     @JoinColumn(name = "specialization", nullable = false)
     private TrainingType specialization;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 

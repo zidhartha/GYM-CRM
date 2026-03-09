@@ -16,8 +16,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Validated
 @RequiredArgsConstructor
@@ -60,21 +62,26 @@ public class TraineeService {
 
     @Transactional
     public Trainee updateTraineeProfile(@Valid TraineeUpdateDto dto, String username) {
-
         log.info("Updating trainee: {}", username);
 
-        Trainee trainee = traineeRepository.findByUsername(username)
+        Trainee trainee = traineeRepository.findByUserUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Trainee with username " + username + " not found"));
-            trainee.setAddress(dto.getAddress());
-            trainee.setDateOfBirth(dto.getDateOfBirth());
+        User user = trainee.getUser();
 
+        trainee.setAddress(dto.getAddress());
+        trainee.setDateOfBirth(dto.getDateOfBirth());
+        if (dto.getPassword() != null) user.setPassword(dto.getPassword());
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
         Trainee updated = traineeRepository.save(trainee);
-
-        log.info("Trainee updated: username={}, address={}, dob={}",
+        log.info("Trainee updated: username={}, address={}, dob={},firstname={}, lastname={}",
                 updated.getUser().getUsername(),
                 updated.getAddress(),
-                updated.getDateOfBirth());
+                updated.getDateOfBirth(),
+                updated.getUser().getFirstName(),
+                updated.getUser().getLastName()
+                );
 
         return updated;
     }
@@ -82,7 +89,7 @@ public class TraineeService {
     @Transactional(readOnly = true)
     public Trainee getTraineeByUsername(String username) {
         log.info("Fetching trainee: {}", username);
-        return traineeRepository.findByUsername(username)
+        return traineeRepository.findByUserUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + username));
     }
 
@@ -90,27 +97,40 @@ public class TraineeService {
     public Trainee updateTraineeTrainers(String username, List<String> trainerUsernames) {
         log.info("Updating trainers list for trainee: {}", username);
 
-        Trainee trainee = traineeRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + username));
+        // first i get the trainee with trainers
+        Trainee trainee = traineeRepository.findByUserUsername(username).
+                orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + username));
 
-        List<Trainer> trainers = trainerUsernames.stream()
-                .map(trainerUsername -> trainerRepository.findByUsername(trainerUsername)
-                        .orElseThrow(() -> new IllegalArgumentException("Trainer not found: " + trainerUsername)))
-                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+        Set<String> currentTrainerUsernames = trainee.getTrainers().
+                stream().map(t -> t.getUser().getUsername()).
+                collect(Collectors.toSet());
 
-        trainee.setTrainers(trainers);
+        // determine which of the usernames i must add to the trainee trainers.
+        Set<String> newTrainerNames = trainerUsernames.stream().filter(
+                name -> !currentTrainerUsernames.contains(name))
+                .collect(Collectors.toSet());
+        // Second query for getting the trainer objects of the new trainers.
+        List<Trainer> newTrainers = trainerRepository.findAllByUserUsernameIn(newTrainerNames);
+        if(newTrainers.size() != newTrainerNames.size()){
+            throw new IllegalArgumentException("Some trainers are not found.");
+        }
+
+        // remove every trainer from this trainee if they are not in the new trainer usernames.
+        Set<String> requestedTrainerSet = new HashSet<>(trainerUsernames);
+        trainee.getTrainers().removeIf(t -> !requestedTrainerSet.contains(t.getUser().getUsername()));
+
+        trainee.getTrainers().addAll(newTrainers);
 
         Trainee updated = traineeRepository.save(trainee);
 
         log.info("Trainee {} trainers updated: {}", username, trainerUsernames);
-
         return updated;
     }
 
     @Transactional
     public void deleteTrainee(String username) {
         log.info("Deleting trainee: {}", username);
-        Trainee trainee = traineeRepository.findByUsername(username)
+        Trainee trainee = traineeRepository.findByUserUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + username));
         traineeRepository.delete(trainee);
         log.info("Trainee deleted: {}", username);

@@ -67,7 +67,7 @@ class TraineeServiceTest {
         dto.setAddress("New Address");
         dto.setDateOfBirth(LocalDate.of(1995, 5, 15));
 
-        when(traineeRepository.findByUsername("gio.jincharadze")).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findByUserUsername("gio.jincharadze")).thenReturn(Optional.of(trainee));
         when(traineeRepository.save(trainee)).thenReturn(trainee);
 
         Trainee result = traineeService.updateTraineeProfile(dto, "gio.jincharadze");
@@ -79,7 +79,7 @@ class TraineeServiceTest {
 
     @Test
     void getTraineeByUsername_shouldReturnTrainee() {
-        when(traineeRepository.findByUsername("gio.jincharadze")).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findByUserUsername("gio.jincharadze")).thenReturn(Optional.of(trainee));
 
         Trainee result = traineeService.getTraineeByUsername("gio.jincharadze");
 
@@ -88,7 +88,7 @@ class TraineeServiceTest {
 
     @Test
     void deleteTrainee_shouldFindAndDeleteTrainee() {
-        when(traineeRepository.findByUsername("gio.jincharadze")).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findByUserUsername("gio.jincharadze")).thenReturn(Optional.of(trainee));
 
         traineeService.deleteTrainee("gio.jincharadze");
 
@@ -100,9 +100,9 @@ class TraineeServiceTest {
         Trainer trainer1 = new Trainer(new User("dato", "jincharadze", "dato.jincharadze", "pass"), new TrainingType("Yoga"));
         Trainer trainer2 = new Trainer(new User("mari", "jincharadze", "mari.jincharadze", "pass"), new TrainingType("Pilates"));
 
-        when(traineeRepository.findByUsername("gio.jincharadze")).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUsername("dato.jincharadze")).thenReturn(Optional.of(trainer1));
-        when(trainerRepository.findByUsername("mari.jincharadze")).thenReturn(Optional.of(trainer2));
+        when(traineeRepository.findByUserUsername("gio.jincharadze")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserUsername("dato.jincharadze")).thenReturn(Optional.of(trainer1));
+        when(trainerRepository.findByUserUsername("mari.jincharadze")).thenReturn(Optional.of(trainer2));
         when(traineeRepository.save(trainee)).thenReturn(trainee);
 
         Trainee result = traineeService.updateTraineeTrainers("gio.jincharadze",
