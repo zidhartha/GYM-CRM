@@ -1,145 +1,127 @@
 package org.example.ServiceTests;
 
-
-import com.gym.crm.exceptions.TrainingNotFoundException;
-import com.gym.crm.Util.IdGenerator;
-import com.gym.crm.dao.TrainingDao;
-import com.gym.crm.model.Training;
-import com.gym.crm.model.TrainingType;
+import com.gym.crm.Repository.TraineeRepository;
+import com.gym.crm.Repository.TrainerRepository;
+import com.gym.crm.Repository.TrainingRepository;
+import com.gym.crm.Repository.TrainingTypeRepository;
+import com.gym.crm.dto.TrainingDto;
+import com.gym.crm.model.*;
 import com.gym.crm.service.TrainingService;
-import com.gym.crm.validators.TrainingValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class TrainingServiceTests {
 
-    private TrainingDao trainingDao;
-    private IdGenerator idGenerator;
-    private TrainingService trainingService;
-    private TrainingValidator trainingValidator;
+    @Mock private TraineeRepository traineeRepository;
+    @Mock private TrainerRepository trainerRepository;
+    @Mock private TrainingTypeRepository trainingTypeRepository;
+    @Mock private TrainingRepository trainingRepository;
+
+    @InjectMocks private TrainingService trainingService;
+
+    private Trainee trainee;
+    private Trainer trainer;
+    private TrainingType trainingType;
+    private Training training;
 
     @BeforeEach
-    void setup() {
-        trainingDao = mock(TrainingDao.class);
-        idGenerator = mock(IdGenerator.class);
-        trainingValidator = mock(TrainingValidator.class);
-
-        trainingService = new TrainingService();
-        trainingService.setTrainingDao(trainingDao);
-        trainingService.setIdGenerator(idGenerator);
-        trainingService.setTrainingValidator(trainingValidator);
+    void setUp() {
+        User traineeUser = new User("dato", "jincharadze", "dato.jincharadze", "pass");
+        User trainerUser = new User("gio", "jincharadze", "gio.jincharadze", "pass");
+        trainingType = new TrainingType("Yoga");
+        trainee = new Trainee(traineeUser, LocalDate.of(1990, 1, 1), "zastava");
+        trainer = new Trainer(trainerUser, trainingType);
+        training = new Training(trainee, trainer, trainingType, "Morning Yoga",
+                LocalDate.of(2024, 6, 1), 60L);
+        training.setId(1L);
     }
 
     @Test
-    void createTraining_success() {
-        TrainingType type = new TrainingType(1L, "Cardio");
-        when(idGenerator.generateNextId()).thenReturn(101L);
+    void createTraining_shouldSaveAndReturnTraining() {
+        TrainingDto dto = buildDto("dato.jincharadze", "gio.jincharadze", "Yoga",
+                "Morning Yoga", LocalDate.of(2024,6,1), 60L);
+        when(traineeRepository.findByUserUsername("dato.jincharadze")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserUsername("gio.jincharadze")).thenReturn(Optional.of(trainer));
+        when(trainingTypeRepository.findByName("Yoga")).thenReturn(Optional.of(trainingType));
+        when(trainingRepository.save(any())).thenReturn(training);
 
-        Training toSave = new Training();
-        toSave.setId(101L);
+        Training result = trainingService.createTraining(dto);
 
-        when(trainingDao.save(any())).thenReturn(toSave);
-
-        Training result = trainingService.createTraining(
-                1L, 2L, "Morning Cardio", type,
-                LocalDate.of(2026, 2, 17), 60
-        );
-
-        assertEquals(101L, result.getId());
-        verify(trainingDao, times(1)).save(any());
+        assertThat(result.getTrainingName()).isEqualTo("Morning Yoga");
+        assertThat(result.getTrainingDuration()).isEqualTo(60L);
+        verify(trainingRepository).save(any());
     }
 
     @Test
-    void selectTraining_success() {
-        Training t = new Training();
-        t.setId(10L);
-        t.setTrainingName("Evening Yoga");
-        when(trainingDao.findById(10L)).thenReturn(Optional.of(t));
+    void createTraining_shouldThrowWhenEntitiesNotFound() {
+        TrainingDto dto = buildDto("ghost", "gio.jincharadze", "Yoga", null, null, null);
+        when(traineeRepository.findByUserUsername("ghost")).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> trainingService.createTraining(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ghost");
 
-        Training result = trainingService.selectTraining(10L);
-        assertEquals(10L, result.getId());
-        assertEquals("Evening Yoga", result.getTrainingName());
+        dto.setTraineeUsername("dato.jincharadze");
+        dto.setTrainerUsername("ghost");
+        when(traineeRepository.findByUserUsername("dato.jincharadze")).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUserUsername("ghost")).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> trainingService.createTraining(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ghost");
+
+        dto.setTrainerUsername("gio.jincharadze");
+        dto.setTrainingTypeName("InvalidType");
+        when(trainerRepository.findByUserUsername("gio.jincharadze")).thenReturn(Optional.of(trainer));
+        when(trainingTypeRepository.findByName("InvalidType")).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> trainingService.createTraining(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("InvalidType");
     }
 
     @Test
-    void selectTraining_notFound() {
-        when(trainingDao.findById(999L)).thenReturn(Optional.empty());
-        assertThrows(TrainingNotFoundException.class, () -> trainingService.selectTraining(999L));
+    void getTraineeTrainings_shouldDelegateToRepository() {
+        when(trainingRepository.findTraineeTrainings("dato.jincharadze", null, null, null, null))
+                .thenReturn(List.of(training));
+        List<Training> result = trainingService.getTraineeTrainings("dato.jincharadze", null, null, null, null);
+        assertThat(result).containsExactly(training);
     }
 
     @Test
-    void selectAllTrainings_success() {
-        Training t1 = new Training();
-        t1.setId(1L);
-        Training t2 = new Training();
-        t2.setId(2L);
-        when(trainingDao.findAll()).thenReturn(List.of(t1, t2));
+    void getTrainerTrainings_shouldDelegateToRepository() {
+        when(trainingRepository.findTrainerTrainings("gio.jincharadze", null, null, null))
+                .thenReturn(List.of(training));
+        List<Training> result = trainingService.getTrainerTrainings("gio.jincharadze", null, null, null);
+        assertThat(result).containsExactly(training);
+    }
 
+    @Test
+    void selectAllTrainings_shouldReturnAll() {
+        when(trainingRepository.findAll()).thenReturn(List.of(training));
         List<Training> result = trainingService.selectAllTrainings();
-        assertEquals(2, result.size());
+        assertThat(result).containsExactly(training);
     }
 
-    @Test
-    void selectTrainingsByTraineeId_success() {
-        Training t1 = new Training();
-        t1.setTraineeId(1L);
-        Training t2 = new Training();
-        t2.setTraineeId(1L);
-        when(trainingDao.findByTraineeId(1L)).thenReturn(List.of(t1, t2));
-
-        List<Training> result = trainingService.selectTrainingsByTraineeId(1L);
-        assertEquals(2, result.size());
-    }
-
-    @Test
-    void selectTraining_nullId_throwsIllegalArgument() {
-        assertThrows(IllegalArgumentException.class, () -> trainingService.selectTraining(null));
-    }
-
-
-    @Test
-    void selectTrainingsByTrainerId_success() {
-        Training t1 = new Training();
-        t1.setTrainerId(2L);
-        Training t2 = new Training();
-        t2.setTrainerId(2L);
-        when(trainingDao.findByTrainerId(2L)).thenReturn(List.of(t1, t2));
-
-        List<Training> result = trainingService.selectTrainingsByTrainerId(2L);
-        assertEquals(2, result.size());
-    }
-
-    @Test
-    void createTraining_invalidInput_shouldThrow() {
-        doThrow(new IllegalArgumentException("Invalid training"))
-                .when(trainingValidator)
-                .validateTraining(any(), any(), any(), any(), any(), anyInt());
-
-        TrainingType type = new TrainingType(1L, "Cardio");
-
-        assertThrows(IllegalArgumentException.class,
-                () -> trainingService.createTraining(null, 1L, "Test", type, LocalDate.now(), 60));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> trainingService.createTraining(1L, null, "Test", type, LocalDate.now(), 60));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> trainingService.createTraining(1L, 1L, "", type, LocalDate.now(), 60));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> trainingService.createTraining(1L, 1L, "Test", null, LocalDate.now(), 60));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> trainingService.createTraining(1L, 1L, "Test", type, null, 60));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> trainingService.createTraining(1L, 1L, "Test", type, LocalDate.now(), 0));
+    private TrainingDto buildDto(String traineeUsername, String trainerUsername, String trainingTypeName,
+                                 String name, LocalDate date, Long duration) {
+        TrainingDto dto = new TrainingDto();
+        dto.setTraineeUsername(traineeUsername);
+        dto.setTrainerUsername(trainerUsername);
+        dto.setTrainingTypeName(trainingTypeName);
+        dto.setTrainingName(name);
+        dto.setTrainingDate(date);
+        dto.setTrainingDuration(duration);
+        return dto;
     }
 }
