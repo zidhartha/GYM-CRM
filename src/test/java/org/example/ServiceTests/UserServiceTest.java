@@ -1,4 +1,5 @@
 package org.example.ServiceTests;
+
 import com.gym.crm.Repository.UserRepository;
 import com.gym.crm.dto.LoginRequestDto;
 import com.gym.crm.model.User;
@@ -9,10 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -20,7 +18,6 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
 
     @Mock private UserRepository userRepository;
-    @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks private UserService userService;
 
@@ -33,42 +30,34 @@ class UserServiceTest {
         user.setActive(true);
     }
 
+
     @Test
     void authenticate_shouldPassWithCorrectCredentials() {
-        LoginRequestDto credentials = new LoginRequestDto("john.doe", "rawPass");
-
-        when(userRepository.findByUsername("john.doe"))
-                .thenReturn(Optional.of(user));
+        when(userRepository.existsByUsernameAndPassword("John.Doe", "rawPass")).thenReturn(true);
 
         assertThatNoException()
-                .isThrownBy(() -> userService.authenticate(credentials));
+                .isThrownBy(() -> userService.authenticate(new LoginRequestDto("John.Doe", "rawPass")));
+    }
+
+    @Test
+    void authenticate_shouldThrowWhenCredentialsInvalid() {
+        when(userRepository.existsByUsernameAndPassword("John.Doe", "wrongPass")).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.authenticate(new LoginRequestDto("John.Doe", "wrongPass")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("John.Doe");
     }
 
 
     @Test
-    void authenticate_shouldThrowWhenUserNotFound() {
-        LoginRequestDto credentials = new LoginRequestDto("ghost", "pass");
+    void updatePassword_shouldSetNewPassword() {
+        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
 
-        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+        userService.updatePassword("John.Doe", "newPass");
 
-        assertThatThrownBy(() -> userService.authenticate(credentials))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("ghost");
+        assertThat(user.getPassword()).isEqualTo("newPass");
+        verify(userRepository).save(user);
     }
-
-    @Test
-    void authenticate_shouldThrowWhenPasswordWrong() {
-        LoginRequestDto credentials = new LoginRequestDto("john.doe", "wrongPass");
-
-        when(userRepository.findByUsername("john.doe"))
-                .thenReturn(Optional.of(user));
-
-        assertThatThrownBy(() -> userService.authenticate(credentials))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid password");
-    }
-
-
 
     @Test
     void updatePassword_shouldThrowWhenUserNotFound() {
@@ -77,14 +66,17 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.updatePassword("ghost", "newPass"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("ghost");
+
+        verify(userRepository, never()).save(any());
     }
+
 
     @Test
     void updateActiveStatus_shouldToggleFromTrueToFalse() {
         user.setActive(true);
         when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
 
-        userService.updateActiveStatus("John.Doe");
+        userService.deactivateUser("John.Doe");
 
         assertThat(user.isActive()).isFalse();
         verify(userRepository).save(user);
@@ -95,7 +87,7 @@ class UserServiceTest {
         user.setActive(false);
         when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
 
-        userService.updateActiveStatus("John.Doe");
+        userService.activateUser("John.Doe");
 
         assertThat(user.isActive()).isTrue();
         verify(userRepository).save(user);
@@ -105,7 +97,51 @@ class UserServiceTest {
     void updateActiveStatus_shouldThrowWhenUserNotFound() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService.updateActiveStatus("ghost"))
+        assertThatThrownBy(() -> userService.activateUser("ghost"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ghost");
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void activateUser_shouldSetActiveToTrue() {
+        user.setActive(false);
+        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
+
+        userService.activateUser("John.Doe");
+
+        assertThat(user.isActive()).isTrue();
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void activateUser_shouldThrowWhenUserNotFound() {
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.activateUser("ghost"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ghost");
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void deactivateUser_shouldSetActiveToFalse() {
+        user.setActive(true);
+        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
+
+        userService.deactivateUser("John.Doe");
+
+        assertThat(user.isActive()).isFalse();
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void deactivateUser_shouldThrowWhenUserNotFound() {
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.deactivateUser("ghost"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("ghost");
 
