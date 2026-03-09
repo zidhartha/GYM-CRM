@@ -45,8 +45,6 @@ public class GymApplication {
                 gym.updateTrainee(traineeUsername, traineePassword, "sandro", "qochiashvili", "safichxia", LocalDate.of(1995, 4, 20));
                 gym.updateTrainer(trainerUsername, trainerPassword, "dato", "jincharadze", "CrossFit");
 
-                gym.activateStatus(traineeUsername, traineePassword);
-                gym.activateStatus(trainerUsername, trainerPassword);
 
                 List<Trainer> unassigned = gym.getUnassignedTrainers(traineeUsername, traineePassword);
                 System.out.println("Unassigned trainers: " + unassigned.size());

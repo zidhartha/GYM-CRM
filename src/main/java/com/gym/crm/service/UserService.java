@@ -35,6 +35,9 @@ public class UserService {
     public void activateUser(String username){
         log.info("Activating active status for user : {}",username);
         User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+        if (user.isActive()) {
+            throw new IllegalStateException("User " + username + " is already active.");
+        }
         user.setActive(true);
         userRepository.save(user);
     }
@@ -43,6 +46,9 @@ public class UserService {
     public void deactivateUser(String username){
         log.info("Deactivating active status for user : {}",username);
         User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+        if (!user.isActive()) {
+            throw new IllegalStateException("User " + username + " is already active.");
+        }
         user.setActive(false);
         userRepository.save(user);
     }
