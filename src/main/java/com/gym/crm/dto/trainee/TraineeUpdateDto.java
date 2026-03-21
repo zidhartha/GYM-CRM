@@ -1,6 +1,5 @@
-package com.gym.crm.dto;
-
-
+package com.gym.crm.dto.trainee;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,9 +10,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TraineeUpdateDto {
+    @NotBlank
     private String firstName;
+    @NotBlank
     private String lastName;
-    private String password;
 
     @Past(message="Date of birth must be in the past.")
     private LocalDate dateOfBirth;

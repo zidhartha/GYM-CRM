@@ -1,5 +1,6 @@
 package com.gym.crm.Repository;
 
+import com.gym.crm.dto.trainee.TraineeListItemDto;
 import com.gym.crm.model.Trainer;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,7 +15,6 @@ public interface TrainerRepository extends JpaRepository<Trainer,Long>{
             "(select t.trainer from Training t where t.trainee.user.username = :traineeUsername) ")
     List<Trainer> findTrainersNotAssignedToTrainee(@Param("traineeUsername") String traineeUsername);
 
-
     List<Trainer> findAll();
 
     @EntityGraph(attributePaths = {"user", "specialization"})
@@ -24,4 +24,14 @@ public interface TrainerRepository extends JpaRepository<Trainer,Long>{
     List<String> findAllUsernames();
 
     List<Trainer> findAllByUserUsernameIn(Set<String> usernames);
+
+    @Query("""
+        SELECT new com.gym.crm.dto.trainee.TraineeListItemDto(
+            tre.user.username, tre.user.firstName, tre.user.lastName)
+        FROM Training tr
+        JOIN tr.trainee tre
+        JOIN tr.trainer trr
+        WHERE trr.user.username = :trainerUsername
+        """)
+    List<TraineeListItemDto> findTrainerTrainees(@Param("trainerUsername") String trainerUsername);
 }

@@ -4,23 +4,24 @@ import com.gym.crm.Repository.TrainerRepository;
 import com.gym.crm.Repository.TrainingTypeRepository;
 import com.gym.crm.Util.PasswordGenerator;
 import com.gym.crm.Util.UsernameGenerator;
-import com.gym.crm.dto.TrainerDto;
-import com.gym.crm.dto.TrainerUpdateDto;
-import com.gym.crm.model.*;
-
+import com.gym.crm.dto.trainer.TrainerCreateDto;
+import com.gym.crm.dto.trainer.TrainerProfileDto;
+import com.gym.crm.dto.trainer.TrainerUpdateDto;
+import com.gym.crm.model.Trainer;
+import com.gym.crm.model.TrainingType;
+import com.gym.crm.model.User;
 import com.gym.crm.service.TrainerService;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,92 +32,97 @@ class TrainerServiceTest {
     @Mock private PasswordGenerator passwordGenerator;
     @Mock private UsernameGenerator usernameGenerator;
 
-    @InjectMocks
-    private TrainerService trainerService;
+    @InjectMocks private TrainerService trainerService;
 
-    private Trainer trainer;
-    private TrainingType yoga;
+    @Test
+    void createTrainer_shouldReturnUsernameAndPassword() {
+        TrainerCreateDto dto = new TrainerCreateDto("Jane", "Smith", "Yoga");
+        when(passwordGenerator.generatePassword()).thenReturn("pass456");
+        when(usernameGenerator.generateUsername("Jane", "Smith")).thenReturn("Jane.Smith");
 
-    @BeforeEach
-    void setUp() {
+        TrainingType type = new TrainingType();
+        type.setName("Yoga");
+        when(trainingTypeRepository.findByName("Yoga")).thenReturn(Optional.of(type));
 
-        yoga = new TrainingType("Yoga");
+        User user = new User("Jane", "Smith", "Jane.Smith", "pass456");
+        Trainer saved = new Trainer(user, type);
+        when(trainerRepository.save(any())).thenReturn(saved);
 
-        User user = new User("dato","jincharadze","dato.jincharadze","pass");
-        trainer = new Trainer(user,yoga);
+        var result = trainerService.createTrainer(dto);
+
+        assertEquals("Jane.Smith", result.get("username"));
+        assertEquals("pass456", result.get("password"));
     }
 
     @Test
-    void createTrainer_shouldCreateTrainer() {
+    void createTrainer_shouldThrowWhenTrainingTypeInvalid() {
+        TrainerCreateDto dto = new TrainerCreateDto("Jane", "Smith", "InvalidType");
+        when(trainingTypeRepository.findByName("InvalidType")).thenReturn(Optional.empty());
 
-        TrainerDto dto = TrainerDto.builder()
-                .firstname("dato")
-                .lastname("jincharadze")
-                .specialization("Yoga")
-                .build();
-
-        when(usernameGenerator.generateUsername("dato","jincharadze"))
-                .thenReturn("dato.jincharadze");
-
-        when(passwordGenerator.generatePassword()).thenReturn("pass");
-
-        when(trainingTypeRepository.findByName("Yoga"))
-                .thenReturn(Optional.of(yoga));
-
-        when(trainerRepository.save(any())).thenReturn(trainer);
-
-        Trainer result = trainerService.createTrainer(dto);
-
-        assertThat(result).isNotNull();
+        assertThrows(IllegalArgumentException.class,
+                () -> trainerService.createTrainer(dto));
     }
 
     @Test
-    void createTrainer_shouldThrowIfTrainingTypeInvalid() {
+    void getTrainerByUsername_shouldReturnProfile() {
+        TrainingType type = new TrainingType();
+        type.setName("Yoga");
+        User user = new User("Jane", "Smith", "jane.smith", "pass");
+        user.setActive(true);
+        Trainer trainer = new Trainer(user, type);
 
-        TrainerDto dto = TrainerDto.builder()
-                .firstname("dato")
-                .lastname("jincharadze")
-                .specialization("Invalid")
-                .build();
+        when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findTrainerTrainees("jane.smith")).thenReturn(List.of());
 
-        when(trainingTypeRepository.findByName("Invalid"))
-                .thenReturn(Optional.empty());
+        TrainerProfileDto result = trainerService.getTrainerByUsername("jane.smith");
 
-        assertThatThrownBy(() ->
-                trainerService.createTrainer(dto))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertEquals("Jane", result.getFirstName());
+        assertEquals("Yoga", result.getSpecialization());
     }
 
     @Test
-    void getTrainerByUsername_shouldReturnTrainer() {
+    void getTrainerByUsername_shouldThrowWhenNotFound() {
+        when(trainerRepository.findByUserUsername("unknown")).thenReturn(Optional.empty());
 
-        when(trainerRepository.findByUserUsername("dato.jincharadze"))
-                .thenReturn(Optional.of(trainer));
-
-        Optional<Trainer> result =
-                trainerService.getTrainerByUsername("dato.jincharadze");
-
-        assertThat(result).isPresent();
+        assertThrows(IllegalArgumentException.class,
+                () -> trainerService.getTrainerByUsername("unknown"));
     }
 
     @Test
-    void updateTrainer_shouldUpdateSpecialization() {
-
+    void updateTrainer_shouldUpdateAndReturn() {
+        TrainingType type = new TrainingType();
+        type.setName("Yoga");
+        User user = new User("Jane", "Smith", "jane.smith", "pass");
+        Trainer trainer = new Trainer(user, type);
         TrainerUpdateDto dto = new TrainerUpdateDto();
-        dto.setFirstName("new");
-        dto.setLastName("name");
-        dto.setSpecialization("Yoga");
+        dto.setFirstName("Janet");
+        dto.setLastName("Smith");
 
-        when(trainerRepository.findByUserUsername("dato.jincharadze"))
-                .thenReturn(Optional.of(trainer));
+        when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(any())).thenReturn(trainer);
+        when(trainerRepository.findTrainerTrainees("jane.smith")).thenReturn(List.of());
 
-        when(trainingTypeRepository.findByName("Yoga"))
-                .thenReturn(Optional.of(yoga));
+        TrainerProfileDto result = trainerService.updateTrainer(dto, "jane.smith");
 
-        when(trainerRepository.save(trainer)).thenReturn(trainer);
+        assertEquals("Janet", result.getFirstName());
+    }
 
-        Trainer result = trainerService.updateTrainer(dto,"dato.jincharadze");
+    @Test
+    void updateTrainer_shouldThrowWhenNotFound() {
+        when(trainerRepository.findByUserUsername("unknown")).thenReturn(Optional.empty());
 
-        assertThat(result.getUser().getFirstName()).isEqualTo("new");
+        assertThrows(IllegalArgumentException.class,
+                () -> trainerService.updateTrainer(new TrainerUpdateDto(), "unknown"));
+    }
+
+    @Test
+    void getUnassignedTrainers_shouldReturnTrainerList() {
+        when(trainerRepository.findTrainersNotAssignedToTrainee("john.doe"))
+                .thenReturn(List.of());
+
+        var result = trainerService.getUnassignedTrainers("john.doe");
+
+        assertNotNull(result);
+        verify(trainerRepository).findTrainersNotAssignedToTrainee("john.doe");
     }
 }

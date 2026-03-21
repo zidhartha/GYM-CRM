@@ -1,4 +1,4 @@
-package com.gym.crm.dto;
+package com.gym.crm.dto.training;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrainingDto {
+public class TrainingCreateDto {
     @NotBlank(message="trainee username is required.")
     private String traineeUsername;
 

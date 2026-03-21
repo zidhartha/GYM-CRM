@@ -1,84 +1,50 @@
 package com.gym.crm;
 
 import com.gym.crm.config.AppConfig;
-import com.gym.crm.facade.GymFacade;
-import com.gym.crm.model.Trainee;
-import com.gym.crm.model.Trainer;
-import com.gym.crm.model.Training;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import java.time.LocalDate;
-import java.util.List;
+import com.gym.crm.config.WebAppConfig;
+import com.gym.crm.interceptor.TransactionLoggingFilter;
+import org.apache.catalina.Context;
+import org.apache.catalina.startup.Tomcat;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
+import org.springframework.web.servlet.DispatcherServlet;
 
 public class GymApplication {
+    public static void main(String[] args) throws Exception {
+        Tomcat tomcat = new Tomcat();
+        tomcat.setPort(8080);
+        tomcat.getConnector();
 
-    public static void main(String[] args) {
-        try (AnnotationConfigApplicationContext context =
-                     new AnnotationConfigApplicationContext(AppConfig.class)) {
+        AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
+        context.register(AppConfig.class, WebAppConfig.class);
 
-            GymFacade gym = context.getBean(GymFacade.class);
+        DispatcherServlet dispatcherServlet = new DispatcherServlet(context);
+        Context ctx = tomcat.addContext("", null);
+        Tomcat.addServlet(ctx, "dispatcher", dispatcherServlet);
+        ctx.addServletMappingDecoded("/", "dispatcher");
 
-            try {
-                Trainer trainer = gym.createTrainer("dato", "jincharadze", "Yoga");
-                Trainee trainee = gym.createTrainee(
-                        "sandro", "qochiashvili",
-                        LocalDate.of(2006, 3, 4),
-                        "zastava"
-                );
+        TransactionLoggingFilter filter = new TransactionLoggingFilter();
+        ctx.addFilterDef(createFilterDef(filter));
+        ctx.addFilterMap(createFilterMap());
 
-                System.out.println("Trainer: " + trainer.getUser().getUsername());
-                System.out.println("Trainer password: " + trainer.getUser().getPassword());
-                System.out.println("Trainee: " + trainee.getUser().getUsername());
-                System.out.println("Trainee password: " + trainee.getUser().getPassword());
+        tomcat.start();
+        System.out.println("Server started on http://localhost:8080");
+        tomcat.getServer().await();
+    }
 
-                String traineeUsername = trainee.getUser().getUsername();
-                String trainerUsername = trainer.getUser().getUsername();
-                String traineePassword = trainee.getUser().getPassword();
-                String trainerPassword = trainer.getUser().getPassword();
+    private static org.apache.tomcat.util.descriptor.web.FilterDef createFilterDef(
+            TransactionLoggingFilter filter) {
+        org.apache.tomcat.util.descriptor.web.FilterDef filterDef =
+                new org.apache.tomcat.util.descriptor.web.FilterDef();
+        filterDef.setFilterName("transactionLoggingFilter");
+        filterDef.setFilter(filter);
+        return filterDef;
+    }
 
-                Trainee foundTrainee = gym.selectTrainee(traineeUsername, traineePassword, traineeUsername);
-                Trainer foundTrainer = gym.selectTrainer(trainerUsername, trainerPassword, trainerUsername);
-
-                System.out.println("Selected trainee: " + foundTrainee.getUser().getUsername());
-                System.out.println("Selected trainer: " + foundTrainer.getUser().getUsername());
-
-                gym.updateTrainee(traineeUsername, traineePassword, "sandro", "qochiashvili", "safichxia", LocalDate.of(1995, 4, 20));
-                gym.updateTrainer(trainerUsername, trainerPassword, "dato", "jincharadze", "CrossFit");
-
-
-                List<Trainer> unassigned = gym.getUnassignedTrainers(traineeUsername, traineePassword);
-                System.out.println("Unassigned trainers: " + unassigned.size());
-
-                gym.updateTraineeTrainers(traineeUsername, traineePassword, List.of(trainerUsername));
-
-                Training training = gym.createTraining(
-                        traineeUsername, traineePassword,
-                        trainerUsername,
-                        "Power Session", "Strength Training",
-                        LocalDate.of(2025, 6, 1), 60L
-                );
-                System.out.println("Training created: " + training.getTrainingName());
-
-                LocalDate from = LocalDate.of(2025, 1, 1);
-                LocalDate to = LocalDate.of(2025, 12, 31);
-
-                List<Training> traineeTrainings = gym.getTraineeTrainings(traineeUsername, traineePassword, from, to, null, null);
-                System.out.println("Trainee trainings: " + traineeTrainings.size());
-
-                List<Training> trainerTrainings = gym.getTrainerTrainings(trainerUsername, trainerPassword, from, to);
-                System.out.println("Trainer trainings: " + trainerTrainings.size());
-
-                gym.changeTraineePassword(traineeUsername, traineePassword, "axaliparoli");
-                gym.changeTrainerPassword(trainerUsername, trainerPassword, "axaliparoli");
-
-                int before = gym.selectAllTrainings().size();
-                gym.deleteTrainee(traineeUsername, "axaliparoli");
-                int after = gym.selectAllTrainings().size();
-                System.out.println("Trainee deleted. Trainings removed by cascade: " + (before - after));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+    private static org.apache.tomcat.util.descriptor.web.FilterMap createFilterMap() {
+        org.apache.tomcat.util.descriptor.web.FilterMap filterMap =
+                new org.apache.tomcat.util.descriptor.web.FilterMap();
+        filterMap.setFilterName("transactionLoggingFilter");
+        filterMap.addURLPattern("/*");
+        return filterMap;
     }
 }

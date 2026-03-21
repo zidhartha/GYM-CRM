@@ -1,4 +1,4 @@
-package com.gym.crm.dto;
+package com.gym.crm.dto.trainer;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrainerDto {
+public class TrainerCreateDto {
 
     @NotBlank(message="Trainers first name is required.")
     private String firstname;

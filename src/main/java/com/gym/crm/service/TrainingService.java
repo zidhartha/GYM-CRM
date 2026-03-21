@@ -4,7 +4,9 @@ import com.gym.crm.Repository.TraineeRepository;
 import com.gym.crm.Repository.TrainerRepository;
 import com.gym.crm.Repository.TrainingRepository;
 import com.gym.crm.Repository.TrainingTypeRepository;
-import com.gym.crm.dto.TrainingDto;
+import com.gym.crm.dto.training.TraineeTrainingListItemDto;
+import com.gym.crm.dto.training.TrainerTrainingListItemDto;
+import com.gym.crm.dto.training.TrainingCreateDto;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Validated
 @Service
@@ -30,7 +33,7 @@ public class TrainingService {
     private final TrainingRepository trainingRepository;
 
     @Transactional
-    public Training createTraining(@Valid TrainingDto dto) {
+    public Training createTraining(@Valid TrainingCreateDto dto) {
 
         log.info("Creating training: trainee = {} , trainer = {}, type = {} , duration = {}",
                 dto.getTraineeUsername(),dto.getTrainerUsername(),
@@ -72,7 +75,7 @@ public class TrainingService {
     }
 
     @Transactional(readOnly = true)
-    public List<Training> getTraineeTrainings(
+    public List<TraineeTrainingListItemDto> getTraineeTrainings(
             String traineeUsername,
             LocalDate from,
             LocalDate to,
@@ -80,29 +83,34 @@ public class TrainingService {
             String trainingType) {
 
         return trainingRepository.findTraineeTrainings(
-                traineeUsername, from, to, trainerUsername, trainingType);
+                traineeUsername, from, to, trainerUsername, trainingType).stream()
+                .map(t -> new TraineeTrainingListItemDto(
+                        t.getTrainingName(),
+                        t.getTrainingDate(),
+                        t.getTrainingType().getId(),
+                        t.getTrainingDuration(),
+                        t.getTrainer().getUser().getUsername()
+                )).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<Training> getTrainerTrainings(
+    public List<TrainerTrainingListItemDto> getTrainerTrainings(
             String trainerUsername,
             LocalDate from,
             LocalDate to,
             String traineeUsername) {
 
         return trainingRepository.findTrainerTrainings(
-                trainerUsername, from, to, traineeUsername);
+                trainerUsername, from, to, traineeUsername).stream()
+                .map(t -> new TrainerTrainingListItemDto(
+                        t.getTrainingName(),
+                        t.getTrainingDate(),
+                        t.getTrainingType().getId(),
+                        t.getTrainingDuration(),
+                        t.getTrainee().getUser().getUsername()
+                )).collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<Training> getTrainerTrainings(
-            String trainerUsername,
-            LocalDate from,
-            LocalDate to) {
-
-        return trainingRepository.findTrainerTrainings(
-                trainerUsername, from, to, null);
-    }
 
     @Transactional(readOnly = true)
     public List<Training> selectAllTrainings() {

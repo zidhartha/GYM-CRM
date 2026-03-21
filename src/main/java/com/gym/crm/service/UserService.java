@@ -1,7 +1,8 @@
 package com.gym.crm.service;
 
 import com.gym.crm.Repository.UserRepository;
-import com.gym.crm.dto.LoginRequestDto;
+import com.gym.crm.dto.authentication.LoginRequestDto;
+import com.gym.crm.exceptions.AccessDeniedException;
 import com.gym.crm.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,21 @@ public class UserService {
     public void authenticate(LoginRequestDto credentials) {
         log.info("Authenticating user: {}",credentials.getUsername());
         if (!userRepository.existsByUsernameAndPassword(credentials.getUsername(), credentials.getPassword())) {
-            throw new IllegalArgumentException("Invalid credentials for user: " + credentials.getUsername());
+            throw new AccessDeniedException("Invalid credentials for user: " + credentials.getUsername());
+        }
+    }
+
+    public void authenticate(String username,String password){
+            log.info("Authenticating user {}",username);
+            if(!userRepository.existsByUsernameAndPassword(username,password)){
+                throw new AccessDeniedException("Invalid credentials for user: " + username);
+            }
+    }
+
+
+    public void assertIdentity(String authUsername,String currUsername){
+        if(!authUsername.equals(currUsername)){
+            throw new AccessDeniedException("Access denied: you can only access your own profile.");
         }
     }
 
@@ -28,8 +43,6 @@ public class UserService {
         user.setPassword(newPassword);
         userRepository.save(user);
     }
-
-
 
     @Transactional
     public void activateUser(String username){
@@ -47,7 +60,7 @@ public class UserService {
         log.info("Deactivating active status for user : {}",username);
         User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         if (!user.isActive()) {
-            throw new IllegalStateException("User " + username + " is already active.");
+            throw new IllegalStateException("User " + username + " is already inactive.");
         }
         user.setActive(false);
         userRepository.save(user);

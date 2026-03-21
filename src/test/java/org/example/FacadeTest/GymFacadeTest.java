@@ -1,23 +1,25 @@
 package org.example.FacadeTest;
-
-import com.gym.crm.dto.*;
+import com.gym.crm.dto.trainee.TraineeCreateDto;
+import com.gym.crm.dto.trainee.TraineeProfileDto;
+import com.gym.crm.dto.trainee.TraineeUpdateDto;
+import com.gym.crm.dto.trainer.TrainerCreateDto;
+import com.gym.crm.dto.trainer.TrainerListDto;
+import com.gym.crm.dto.trainer.TrainerProfileDto;
+import com.gym.crm.dto.trainer.TrainerUpdateDto;
+import com.gym.crm.dto.training.TrainingCreateDto;
 import com.gym.crm.facade.GymFacade;
-import com.gym.crm.model.*;
 import com.gym.crm.service.*;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,223 +30,189 @@ class GymFacadeTest {
     @Mock private TrainingService trainingService;
     @Mock private UserService userService;
 
-    @InjectMocks
-    private GymFacade gymFacade;
-
-    private Trainee trainee;
-    private Trainer trainer;
-    private Training training;
-
-    @BeforeEach
-    void setUp() {
-
-        TrainingType type = new TrainingType("Yoga");
-
-        trainee = new Trainee(
-                new User("John","Doe","John.Doe","pass"),
-                LocalDate.of(1990,1,1),
-                "Address"
-        );
-
-        trainer = new Trainer(
-                new User("Jane","Smith","Jane.Smith","pass"),
-                type
-        );
-
-        training = new Training(
-                trainee,
-                trainer,
-                type,
-                "Morning Yoga",
-                LocalDate.of(2024,6,1),
-                60L
-        );
-    }
+    @InjectMocks private GymFacade gymFacade;
 
     @Test
     void authenticate_shouldDelegateToUserService() {
-
-        gymFacade.authenticate("John.Doe","pass");
-
-        verify(userService).authenticate(any(LoginRequestDto.class));
+        gymFacade.authenticate("john.doe", "password");
+        verify(userService).authenticate("john.doe", "password");
     }
 
     @Test
-    void authenticate_shouldThrowWhenCredentialsInvalid() {
-
-        doThrow(new IllegalArgumentException())
-                .when(userService).authenticate(any());
-
-        assertThatThrownBy(() ->
-                gymFacade.authenticate("John.Doe","wrong"))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-
-    @Test
-    void createTrainee_shouldDelegateToService() {
-
-        when(traineeService.createTrainee(any())).thenReturn(trainee);
-
-        Trainee result = gymFacade.createTrainee(
-                "John","Doe",
-                LocalDate.of(1990,1,1),
-                "Address"
-        );
-
-        assertThat(result).isEqualTo(trainee);
-        verify(traineeService).createTrainee(any());
+    void assertIdentity_shouldDelegateToUserService() {
+        gymFacade.assertIdentity("john.doe", "john.doe");
+        verify(userService).assertIdentity("john.doe", "john.doe");
     }
 
     @Test
-    void selectTrainee_shouldAuthenticateThenReturnTrainee() {
-
-        when(traineeService.getTraineeByUsername("John.Doe"))
-                .thenReturn(trainee);
-
-        Trainee result =
-                gymFacade.selectTrainee("John.Doe","pass","John.Doe");
-
-        assertThat(result).isEqualTo(trainee);
-
-        verify(userService).authenticate(any());
-        verify(traineeService).getTraineeByUsername("John.Doe");
+    void updatePassword_shouldDelegateToUserService() {
+        gymFacade.updatePassword("john.doe", "newpass");
+        verify(userService).updatePassword("john.doe", "newpass");
     }
 
     @Test
-    void deleteTrainee_shouldAuthenticateThenDelete() {
-
-        gymFacade.deleteTrainee("John.Doe","pass");
-
-        verify(userService).authenticate(any());
-        verify(traineeService).deleteTrainee("John.Doe");
+    void activateUser_shouldDelegateToUserService() {
+        gymFacade.activateUser("john.doe");
+        verify(userService).activateUser("john.doe");
     }
 
     @Test
-    void matchTraineeCredentials_shouldReturnTrueWhenValid() {
-
-        boolean result =
-                gymFacade.matchTraineeCredentials("John.Doe","pass");
-
-        assertThat(result).isTrue();
-    }
-
-
-    @Test
-    void createTrainer_shouldDelegateToService() {
-
-        when(trainerService.createTrainer(any())).thenReturn(trainer);
-
-        Trainer result =
-                gymFacade.createTrainer("Jane","Smith","Yoga");
-
-        assertThat(result).isEqualTo(trainer);
+    void deactivateUser_shouldDelegateToUserService() {
+        gymFacade.deactivateUser("john.doe");
+        verify(userService).deactivateUser("john.doe");
     }
 
     @Test
-    void selectTrainer_shouldAuthenticateThenReturnTrainer() {
+    void createTrainee_shouldReturnUsernameAndPassword() {
+        TraineeCreateDto dto = new TraineeCreateDto("John", "Doe", null, null);
+        when(traineeService.createTrainee(dto))
+                .thenReturn(Map.of("username", "john.doe", "password", "pass123"));
 
-        when(trainerService.getTrainerByUsername("Jane.Smith"))
-                .thenReturn(Optional.of(trainer));
+        Map<String, String> result = gymFacade.createTrainee(dto);
 
-        Trainer result =
-                gymFacade.selectTrainer("Jane.Smith","pass","Jane.Smith");
-
-        assertThat(result).isEqualTo(trainer);
+        assertEquals("john.doe", result.get("username"));
+        assertEquals("pass123", result.get("password"));
+        verify(traineeService).createTrainee(dto);
     }
 
     @Test
-    void updateTrainer_shouldAuthenticateThenUpdate() {
+    void getTraineeProfile_shouldReturnProfile() {
+        TraineeProfileDto expected = new TraineeProfileDto(
+                "John", "Doe", null, null, true, new TrainerListDto(List.of()));
+        when(traineeService.getTraineeProfile("john.doe")).thenReturn(expected);
 
-        when(trainerService.updateTrainer(any(TrainerUpdateDto.class), eq("Jane.Smith")))
-                .thenReturn(trainer);
+        TraineeProfileDto result = gymFacade.getTraineeProfile("john.doe");
 
-        Trainer result =
-                gymFacade.updateTrainer(
-                        "Jane.Smith",
-                        "pass",
-                        "Jane",
-                        "Smith",
-                        "Yoga"
-                );
-
-        assertThat(result).isEqualTo(trainer);
-
-        verify(userService).authenticate(any(LoginRequestDto.class));
-        verify(trainerService).updateTrainer(any(TrainerUpdateDto.class), eq("Jane.Smith"));
-    }
-
-
-    @Test
-    void createTraining_shouldAuthenticateAndCreate() {
-
-        when(trainingService.createTraining(any()))
-                .thenReturn(training);
-
-        Training result =
-                gymFacade.createTraining(
-                        "John.Doe",
-                        "pass",
-                        "Jane.Smith",
-                        "Morning Yoga",
-                        "Yoga",
-                        LocalDate.of(2024,6,1),
-                        60L
-                );
-
-        assertThat(result).isEqualTo(training);
-
-        verify(userService).authenticate(any());
-        verify(trainingService).createTraining(any());
+        assertEquals(expected, result);
+        verify(traineeService).getTraineeProfile("john.doe");
     }
 
     @Test
-    void getTrainerTrainings_shouldReturnTrainings() {
+    void getTraineeProfile_shouldThrowWhenNotFound() {
+        when(traineeService.getTraineeProfile("unknown"))
+                .thenThrow(new IllegalArgumentException("Trainee not found: unknown"));
 
-        when(trainingService.getTrainerTrainings(
-                eq("Jane.Smith"), any(), any(), any()))
-                .thenReturn(List.of(training));
-
-        List<Training> result =
-                gymFacade.getTrainerTrainings(
-                        "Jane.Smith",
-                        "pass",
-                        null,
-                        null,
-                        null
-                );
-
-        assertThat(result).containsExactly(training);
-    }
-
-
-    @Test
-    void selectAllTrainees_shouldReturnAll() {
-
-        when(traineeService.selectAllTrainees())
-                .thenReturn(List.of(trainee));
-
-        assertThat(gymFacade.selectAllTrainees())
-                .containsExactly(trainee);
+        assertThrows(IllegalArgumentException.class,
+                () -> gymFacade.getTraineeProfile("unknown"));
     }
 
     @Test
-    void selectAllTrainers_shouldReturnAll() {
+    void updateTraineeProfile_shouldReturnUpdatedProfile() {
+        TraineeUpdateDto dto = new TraineeUpdateDto();
+        TraineeProfileDto expected = new TraineeProfileDto(
+                "John", "Smith", null, null, true, new TrainerListDto(List.of()));
+        when(traineeService.updateTraineeProfile(dto, "john.doe")).thenReturn(expected);
 
-        when(trainerService.selectAllTrainers())
-                .thenReturn(List.of(trainer));
+        TraineeProfileDto result = gymFacade.updateTraineeProfile(dto, "john.doe");
 
-        assertThat(gymFacade.selectAllTrainers())
-                .containsExactly(trainer);
+        assertEquals(expected, result);
+        verify(traineeService).updateTraineeProfile(dto, "john.doe");
     }
 
     @Test
-    void selectAllTrainings_shouldReturnAll() {
+    void deleteTrainee_shouldDelegateToTraineeService() {
+        gymFacade.deleteTrainee("john.doe");
+        verify(traineeService).deleteTrainee("john.doe");
+    }
 
-        when(trainingService.selectAllTrainings())
-                .thenReturn(List.of(training));
+    @Test
+    void updateTraineeTrainers_shouldReturnUpdatedTrainerList() {
+        List<String> trainerUsernames = List.of("trainer1", "trainer2");
+        TrainerListDto expected = new TrainerListDto(List.of());
+        when(traineeService.updateTraineeTrainers("john.doe", trainerUsernames))
+                .thenReturn(expected);
 
-        assertThat(gymFacade.selectAllTrainings())
-                .containsExactly(training);
+        TrainerListDto result = gymFacade.updateTraineeTrainers("john.doe", trainerUsernames);
+
+        assertEquals(expected, result);
+        verify(traineeService).updateTraineeTrainers("john.doe", trainerUsernames);
+    }
+
+    @Test
+    void createTrainer_shouldReturnUsernameAndPassword() {
+        TrainerCreateDto dto = new TrainerCreateDto("Jane", "Smith", "Yoga");
+        when(trainerService.createTrainer(dto))
+                .thenReturn(Map.of("username", "jane.smith", "password", "pass456"));
+
+        Map<String, String> result = gymFacade.createTrainer(dto);
+
+        assertEquals("jane.smith", result.get("username"));
+        verify(trainerService).createTrainer(dto);
+    }
+
+    @Test
+    void getTrainerProfile_shouldReturnProfile() {
+        TrainerProfileDto expected = new TrainerProfileDto(
+                "jane.smith", "Jane", "Smith", "Yoga", true, null);
+        when(trainerService.getTrainerByUsername("jane.smith")).thenReturn(expected);
+
+        TrainerProfileDto result = gymFacade.getTrainerProfile("jane.smith");
+
+        assertEquals(expected, result);
+        verify(trainerService).getTrainerByUsername("jane.smith");
+    }
+
+    @Test
+    void getTrainerProfile_shouldThrowWhenNotFound() {
+        when(trainerService.getTrainerByUsername("unknown"))
+                .thenThrow(new IllegalArgumentException("Trainer not found: unknown"));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> gymFacade.getTrainerProfile("unknown"));
+    }
+
+    @Test
+    void updateTrainer_shouldReturnUpdatedProfile() {
+        TrainerUpdateDto dto = new TrainerUpdateDto();
+        TrainerProfileDto expected = new TrainerProfileDto(
+                "jane.smith", "Jane", "Updated", "Yoga", true, null);
+        when(trainerService.updateTrainer(dto, "jane.smith")).thenReturn(expected);
+
+        TrainerProfileDto result = gymFacade.updateTrainer(dto, "jane.smith");
+
+        assertEquals(expected, result);
+        verify(trainerService).updateTrainer(dto, "jane.smith");
+    }
+
+    @Test
+    void getUnassignedTrainers_shouldReturnTrainerList() {
+        TrainerListDto expected = new TrainerListDto(List.of());
+        when(trainerService.getUnassignedTrainers("john.doe")).thenReturn(expected);
+
+        TrainerListDto result = gymFacade.getUnassignedTrainers("john.doe");
+
+        assertEquals(expected, result);
+        verify(trainerService).getUnassignedTrainers("john.doe");
+    }
+
+    @Test
+    void createTraining_shouldDelegateToTrainingService() {
+        TrainingCreateDto dto = new TrainingCreateDto();
+        gymFacade.createTraining(dto);
+        verify(trainingService).createTraining(dto);
+    }
+
+    @Test
+    void getTraineeTrainings_shouldReturnList() {
+        when(trainingService.getTraineeTrainings("john.doe", null, null, null, null))
+                .thenReturn(List.of());
+
+        var result = gymFacade.getTraineeTrainings("john.doe", null, null, null, null);
+
+        assertNotNull(result);
+        verify(trainingService).getTraineeTrainings("john.doe", null, null, null, null);
+    }
+
+    @Test
+    void getTrainerTrainings_shouldReturnList() {
+        LocalDate from = LocalDate.of(2024, 1, 1);
+        LocalDate to = LocalDate.of(2024, 12, 31);
+        when(trainingService.getTrainerTrainings("jane.smith", from, to, null))
+                .thenReturn(List.of());
+
+        var result = gymFacade.getTrainerTrainings("jane.smith", from, to, null);
+
+        assertNotNull(result);
+        verify(trainingService).getTrainerTrainings("jane.smith", from, to, null);
     }
 }

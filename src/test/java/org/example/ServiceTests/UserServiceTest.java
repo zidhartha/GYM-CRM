@@ -1,7 +1,8 @@
 package org.example.ServiceTests;
 
 import com.gym.crm.Repository.UserRepository;
-import com.gym.crm.dto.LoginRequestDto;
+import com.gym.crm.dto.authentication.LoginRequestDto;
+import com.gym.crm.exceptions.AccessDeniedException;
 import com.gym.crm.model.User;
 import com.gym.crm.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +45,7 @@ class UserServiceTest {
         when(userRepository.existsByUsernameAndPassword("John.Doe", "wrongPass")).thenReturn(false);
 
         assertThatThrownBy(() -> userService.authenticate(new LoginRequestDto("John.Doe", "wrongPass")))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("John.Doe");
     }
 

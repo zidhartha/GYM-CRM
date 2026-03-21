@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.gym.crm.Loader.*;
 import com.gym.crm.Repository.*;
-import com.gym.crm.dto.TraineeDto;
-import com.gym.crm.dto.TrainerDto;
-import com.gym.crm.dto.TrainingDto;
+import com.gym.crm.dto.trainee.TraineeCreateDto;
+import com.gym.crm.dto.trainer.TrainerCreateDto;
+import com.gym.crm.dto.training.TrainingCreateDto;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -68,8 +68,8 @@ public class StorageInitializer {
     @Getter
     public static class SeedData {
         private List<String> trainingTypes;
-        private List<TraineeDto> trainees;
-        private List<TrainerDto> trainers;
-        private List<TrainingDto> trainings;
+        private List<TraineeCreateDto> trainees;
+        private List<TrainerCreateDto> trainers;
+        private List<TrainingCreateDto> trainings;
     }
 }
