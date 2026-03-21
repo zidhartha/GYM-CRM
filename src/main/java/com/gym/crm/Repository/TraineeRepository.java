@@ -1,0 +1,20 @@
+package com.gym.crm.Repository;
+
+import com.gym.crm.model.Trainee;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.util.List;
+import java.util.Optional;
+
+public interface TraineeRepository extends JpaRepository<Trainee,Long> {
+    List<Trainee> findAll();
+
+    @Query("SELECT t.user.username FROM Trainee t")
+    List<String> findAllUsernames();
+
+
+    @EntityGraph(attributePaths = {"user","trainers"})
+    Optional<Trainee> findByUserUsername(String username);
+}

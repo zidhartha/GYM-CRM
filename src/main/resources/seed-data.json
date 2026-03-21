@@ -1,0 +1,138 @@
+{
+  "trainingTypes": [
+    "Strength Training",
+    "Cardio Fitness",
+    "Yoga",
+    "Pilates",
+    "HIIT",
+    "CrossFit",
+    "Flexibility",
+    "Endurance"
+  ],
+  "trainees": [
+    {
+      "firstname": "Jack",
+      "lastname": "Johnson",
+      "dateOfBirth": "1995-04-20",
+      "address": "123 Main St"
+    },{
+      "firstname": "daundobeli",
+      "lastname": "faye",
+      "dateOfBirth": "2025-06-07",
+      "address": "varketili"
+    },
+
+    {
+      "firstname": "Will",
+      "lastname": "Smith",
+      "dateOfBirth": "1997-12-11",
+      "address": "456 Park Ave"
+    },
+    {
+      "firstname": "Alice",
+      "lastname": "Davis",
+      "dateOfBirth": "1998-07-05",
+      "address": "789 Oak St"
+    },
+    {
+      "firstname": "Bob",
+      "lastname": "Miller",
+      "dateOfBirth": "1994-09-30",
+      "address": "321 Pine St"
+    },
+    {
+      "firstname": "Clara",
+      "lastname": "Wilson",
+      "dateOfBirth": "2000-01-22",
+      "address": "654 Elm St"
+    }
+  ],
+  "trainers": [
+    {
+      "firstname": "Nick",
+      "lastname": "Brown",
+      "specialization": "Strength Training"
+    },
+    {
+      "firstname": "Emma",
+      "lastname": "Clark",
+      "specialization": "Cardio Fitness"
+    },
+    {
+      "firstname": "Liam",
+      "lastname": "Taylor",
+      "specialization": "Yoga"
+    },
+    {
+      "firstname": "Sophia",
+      "lastname": "Anderson",
+      "specialization": "Pilates"
+    }
+  ],
+  "trainings": [
+    {
+      "traineeUsername": "jack.johnson",
+      "trainerUsername": "nick.brown",
+      "trainingName": "Strength Basics",
+      "trainingTypeName": "Strength Training",
+      "trainingDate": "2025-03-10",
+      "trainingDuration": 60
+    },
+    {
+      "traineeUsername": "will.smith",
+      "trainerUsername": "emma.clark",
+      "trainingName": "Advanced Cardio",
+      "trainingTypeName": "Cardio Fitness",
+      "trainingDate": "2025-03-15",
+      "trainingDuration": 45
+    },
+    {
+      "traineeUsername": "alice.davis",
+      "trainerUsername": "liam.taylor",
+      "trainingName": "Morning Yoga Flow",
+      "trainingTypeName": "Yoga",
+      "trainingDate": "2025-03-12",
+      "trainingDuration": 50
+    },
+    {
+      "traineeUsername": "bob.miller",
+      "trainerUsername": "nick.brown",
+      "trainingName": "Strength Plus",
+      "trainingTypeName": "Strength Training",
+      "trainingDate": "2025-03-14",
+      "trainingDuration": 70
+    },
+    {
+      "traineeUsername": "clara.wilson",
+      "trainerUsername": "sophia.anderson",
+      "trainingName": "Pilates Core",
+      "trainingTypeName": "Pilates",
+      "trainingDate": "2025-03-16",
+      "trainingDuration": 55
+    },
+    {
+      "traineeUsername": "jack.johnson",
+      "trainerUsername": "emma.clark",
+      "trainingName": "HIIT Blast",
+      "trainingTypeName": "HIIT",
+      "trainingDate": "2025-03-18",
+      "trainingDuration": 40
+    },
+    {
+      "traineeUsername": "will.smith",
+      "trainerUsername": "liam.taylor",
+      "trainingName": "Yoga Stretch",
+      "trainingTypeName": "Yoga",
+      "trainingDate": "2025-03-20",
+      "trainingDuration": 50
+    },
+    {
+      "traineeUsername": "alice.davis",
+      "trainerUsername": "emma.clark",
+      "trainingName": "Cardio Endurance",
+      "trainingTypeName": "Cardio Fitness",
+      "trainingDate": "2025-03-22",
+      "trainingDuration": 45
+    }
+  ]
+}

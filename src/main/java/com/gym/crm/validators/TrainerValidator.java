@@ -1,6 +1,6 @@
 package com.gym.crm.validators;
 
-import com.gym.crm.model.Trainer;
+
 import com.gym.crm.model.TrainingType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class TrainerValidator{
     private static final Logger log = LoggerFactory.getLogger(TrainerValidator.class);
-
 
     public void validateTrainer(String firstName, String lastName, TrainingType specialization) {
         if (firstName == null || firstName.trim().isEmpty()) {
