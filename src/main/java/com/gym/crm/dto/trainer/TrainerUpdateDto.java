@@ -1,5 +1,6 @@
-package com.gym.crm.dto;
+package com.gym.crm.dto.trainer;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,9 +9,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TrainerUpdateDto {
+
+    @NotBlank(message = "First name is required.")
     private String firstName;
+
+    @NotBlank(message = "Last name is required.")
     private String lastName;
-    private String password;
-    @NotBlank(message="Trainers specialization is required.")
-    private String specialization;
+
+    @NotNull(message = "isActive is required.")
+    private Boolean isActive;
 }

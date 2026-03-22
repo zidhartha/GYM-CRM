@@ -2,8 +2,10 @@ package com.gym.crm.service;
 
 import com.gym.crm.Repository.TrainerRepository;
 import com.gym.crm.Repository.TrainingTypeRepository;
-import com.gym.crm.dto.TrainerDto;
-import com.gym.crm.dto.TrainerUpdateDto;
+import com.gym.crm.Util.EntityMapper;
+import com.gym.crm.dto.authentication.RegistrationResponseDto;
+import com.gym.crm.dto.trainee.TraineeListDto;
+import com.gym.crm.dto.trainer.*;
 import com.gym.crm.Util.PasswordGenerator;
 import com.gym.crm.Util.UsernameGenerator;
 import com.gym.crm.model.Trainer;
@@ -17,8 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Validated
 @Service
@@ -29,43 +30,17 @@ public class TrainerService {
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainerRepository trainerRepository;
     private final UsernameGenerator usernameGenerator;
+    private final EntityMapper entityMapper;
+
+
     @Transactional
-    public Trainer createTrainer(@Valid TrainerDto dto) {
+    public RegistrationResponseDto createTrainer(@Valid TrainerCreateDto dto) {
 
         log.info("Creating trainer: {} {}, specialization={}",
                 dto.getFirstname(),
                 dto.getLastname(),
                 dto.getSpecialization());
-
-        User user = new User(
-                dto.getFirstname(),
-                dto.getLastname(),
-                usernameGenerator.generateUsername(dto.getFirstname(),dto.getLastname()),
-                passwordGenerator.generatePassword()
-        );
-        TrainingType trainingType = trainingTypeRepository
-                .findByName(dto.getSpecialization())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Training type invalid: " + dto.getSpecialization()));
-
-        Trainer trainer = new Trainer(user, trainingType);
-
-        Trainer saved = trainerRepository.save(trainer);
-
-        log.info("Trainer created: id={}, username={}, specialization={}",
-                saved.getId(),
-                saved.getUser().getUsername(),
-                saved.getSpecialization());
-
-        return saved;
-    }
-
-    @Transactional
-    public Trainer createTrainer(@Valid TrainerDto dto, String rawPassword) {
-        log.info("Creating trainer with given password: {} {}, specialization={}",
-                dto.getFirstname(),
-                dto.getLastname(),
-                dto.getSpecialization());
+        String rawPassword = passwordGenerator.generatePassword();
 
         User user = new User(
                 dto.getFirstname(),
@@ -74,7 +49,6 @@ public class TrainerService {
                 rawPassword
         );
 
-        System.out.println(">>> Trainer " + dto.getFirstname() + "." + dto.getLastname() + " : password = " + rawPassword);
 
         TrainingType trainingType = trainingTypeRepository
                 .findByName(dto.getSpecialization())
@@ -82,7 +56,6 @@ public class TrainerService {
                         "Training type invalid: " + dto.getSpecialization()));
 
         Trainer trainer = new Trainer(user, trainingType);
-
         Trainer saved = trainerRepository.save(trainer);
 
         log.info("Trainer created: id={}, username={}, specialization={}",
@@ -90,56 +63,76 @@ public class TrainerService {
                 saved.getUser().getUsername(),
                 saved.getSpecialization());
 
-        return saved;
+        return RegistrationResponseDto.builder()
+                .username(saved.getUser().getUsername())
+                .password(rawPassword)
+                .build();
+
     }
 
     @Transactional(readOnly = true)
-    public Optional<Trainer> getTrainerByUsername(String username) {
+    public TrainerProfileDto getTrainerByUsername(String username) {
 
         log.info("Fetching trainer: {}", username);
 
-        return trainerRepository.findByUserUsername(username);
-    }
+        Trainer trainer = trainerRepository.findByUserUsername(username).orElseThrow(
+                () -> new IllegalArgumentException("Trainer not found: " + username)
+        );
 
-    @Transactional(readOnly = true)
-    public List<Trainer> getUnassignedTrainers(String username) {
-
-        log.info("Fetching unassigned trainers for trainee: {}", username);
-
-        return trainerRepository.findTrainersNotAssignedToTrainee(username);
+        return TrainerProfileDto.builder()
+                .firstName(trainer.getUser().getFirstName())
+                .lastName(trainer.getUser().getLastName())
+                .username(trainer.getUser().getUsername())
+                .specialization(trainer.getSpecialization().getName())
+                .isActive(trainer.getUser().isActive())
+                .trainees(entityMapper.mapToTraineeListDto(trainer.getTrainees()))
+                .build();
     }
 
     @Transactional
-    public Trainer updateTrainer(@Valid TrainerUpdateDto dto, String username) {
-
+    public TrainerProfileDto updateTrainer(@Valid TrainerUpdateDto dto, String username) {
         log.info("Updating trainer: {}", username);
 
-        Trainer trainer = trainerRepository.findByUserUsername(username)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Trainer with username " + username + " not found"));
-        User user = trainer.getUser();
-        TrainingType specialization = trainingTypeRepository
-                .findByName(dto.getSpecialization())
-                .orElseThrow(() ->
-                        new NoSuchElementException("Training type not found: " + dto.getSpecialization()));
+        Trainer trainer = trainerRepository.findByUserUsername(username).orElseThrow(
+                () -> new IllegalArgumentException("Trainer not found: " + username)
+        );
 
-        trainer.setSpecialization(specialization);
-        if (dto.getPassword() != null) user.setPassword(dto.getPassword());
+
+        User user = trainer.getUser();
+
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
+        user.setActive(dto.getIsActive());
         Trainer updated = trainerRepository.save(trainer);
-
-        log.info("Trainer updated: username={}, specialization={},firstname={},lastname={}",
-                updated.getUser().getUsername(),
-                updated.getSpecialization().getName(),
-                updated.getUser().getFirstName(),
-                updated.getUser().getLastName());
-
-        return updated;
+        return TrainerProfileDto.builder()
+                .firstName(updated.getUser().getFirstName())
+                .lastName(updated.getUser().getLastName())
+                .username(username)
+                .specialization(updated.getSpecialization().getName())
+                .isActive(updated.getUser().isActive())
+                .trainees(entityMapper.mapToTraineeListDto(updated.getTrainees()))
+                .build();
     }
 
     @Transactional(readOnly = true)
-    public List<Trainer> selectAllTrainers() {
-        return trainerRepository.findAll();
+    public List<TrainerProfileDto> selectAllTrainers() {
+        return trainerRepository.findAll()
+                .stream()
+                .map(trainer -> TrainerProfileDto.builder()
+                        .firstName(trainer.getUser().getFirstName())
+                        .lastName(trainer.getUser().getLastName())
+                        .username(trainer.getUser().getUsername())
+                        .specialization(trainer.getSpecialization().getName())
+                        .isActive(trainer.getUser().isActive())
+                        .trainees(entityMapper.mapToTraineeListDto(trainer.getTrainees()))
+                        .build()
+                )
+                .toList();
+    }
+
+    public TrainerListDto getUnassignedTrainers(String username) {
+        return entityMapper.mapToTrainerListDto(
+                trainerRepository.findTrainersNotAssignedToTrainee(username)
+        );
     }
 }

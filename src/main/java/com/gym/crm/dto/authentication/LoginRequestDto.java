@@ -1,4 +1,4 @@
-package com.gym.crm.dto;
+package com.gym.crm.dto.authentication;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

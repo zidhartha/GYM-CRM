@@ -1,84 +1,36 @@
 package com.gym.crm;
 
 import com.gym.crm.config.AppConfig;
-import com.gym.crm.facade.GymFacade;
-import com.gym.crm.model.Trainee;
-import com.gym.crm.model.Trainer;
-import com.gym.crm.model.Training;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import java.time.LocalDate;
-import java.util.List;
+import com.gym.crm.config.WebAppConfig;
+import com.gym.crm.interceptor.TransactionLoggingFilter;
+import jakarta.servlet.Filter;
+import org.springframework.lang.NonNull;
+import org.springframework.web.filter.CharacterEncodingFilter;
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
-public class GymApplication {
+public class GymApplication extends AbstractAnnotationConfigDispatcherServletInitializer {
 
-    public static void main(String[] args) {
-        try (AnnotationConfigApplicationContext context =
-                     new AnnotationConfigApplicationContext(AppConfig.class)) {
+    @Override
+    protected Class<?>[] getRootConfigClasses() {
+        return new Class<?>[]{AppConfig.class};
+    }
 
-            GymFacade gym = context.getBean(GymFacade.class);
+    @Override
+    protected Class<?>[] getServletConfigClasses() {
+        return new Class<?>[]{WebAppConfig.class};
+    }
 
-            try {
-                Trainer trainer = gym.createTrainer("dato", "jincharadze", "Yoga");
-                Trainee trainee = gym.createTrainee(
-                        "sandro", "qochiashvili",
-                        LocalDate.of(2006, 3, 4),
-                        "zastava"
-                );
+    @NonNull
+    @Override
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
 
-                System.out.println("Trainer: " + trainer.getUser().getUsername());
-                System.out.println("Trainer password: " + trainer.getUser().getPassword());
-                System.out.println("Trainee: " + trainee.getUser().getUsername());
-                System.out.println("Trainee password: " + trainee.getUser().getPassword());
-
-                String traineeUsername = trainee.getUser().getUsername();
-                String trainerUsername = trainer.getUser().getUsername();
-                String traineePassword = trainee.getUser().getPassword();
-                String trainerPassword = trainer.getUser().getPassword();
-
-                Trainee foundTrainee = gym.selectTrainee(traineeUsername, traineePassword, traineeUsername);
-                Trainer foundTrainer = gym.selectTrainer(trainerUsername, trainerPassword, trainerUsername);
-
-                System.out.println("Selected trainee: " + foundTrainee.getUser().getUsername());
-                System.out.println("Selected trainer: " + foundTrainer.getUser().getUsername());
-
-                gym.updateTrainee(traineeUsername, traineePassword, "sandro", "qochiashvili", "safichxia", LocalDate.of(1995, 4, 20));
-                gym.updateTrainer(trainerUsername, trainerPassword, "dato", "jincharadze", "CrossFit");
-
-
-                List<Trainer> unassigned = gym.getUnassignedTrainers(traineeUsername, traineePassword);
-                System.out.println("Unassigned trainers: " + unassigned.size());
-
-                gym.updateTraineeTrainers(traineeUsername, traineePassword, List.of(trainerUsername));
-
-                Training training = gym.createTraining(
-                        traineeUsername, traineePassword,
-                        trainerUsername,
-                        "Power Session", "Strength Training",
-                        LocalDate.of(2025, 6, 1), 60L
-                );
-                System.out.println("Training created: " + training.getTrainingName());
-
-                LocalDate from = LocalDate.of(2025, 1, 1);
-                LocalDate to = LocalDate.of(2025, 12, 31);
-
-                List<Training> traineeTrainings = gym.getTraineeTrainings(traineeUsername, traineePassword, from, to, null, null);
-                System.out.println("Trainee trainings: " + traineeTrainings.size());
-
-                List<Training> trainerTrainings = gym.getTrainerTrainings(trainerUsername, trainerPassword, from, to);
-                System.out.println("Trainer trainings: " + trainerTrainings.size());
-
-                gym.changeTraineePassword(traineeUsername, traineePassword, "axaliparoli");
-                gym.changeTrainerPassword(trainerUsername, trainerPassword, "axaliparoli");
-
-                int before = gym.selectAllTrainings().size();
-                gym.deleteTrainee(traineeUsername, "axaliparoli");
-                int after = gym.selectAllTrainings().size();
-                System.out.println("Trainee deleted. Trainings removed by cascade: " + (before - after));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+    @Override
+    protected Filter[] getServletFilters() {
+        CharacterEncodingFilter encodingFilter = new CharacterEncodingFilter();
+        encodingFilter.setEncoding("UTF-8");
+        encodingFilter.setForceEncoding(true);
+        return new Filter[]{encodingFilter, new TransactionLoggingFilter()};
     }
 }
