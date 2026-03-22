@@ -35,7 +35,7 @@ public class Trainer{
     private User user;
 
     @ManyToMany(mappedBy = "trainers")
-    private Set<Trainee> trainees = new HashSet<>();
+    private Set<Trainee> trainees;
 
     @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Training> trainings;
