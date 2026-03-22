@@ -1,7 +1,10 @@
 package com.gym.crm.model;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Setter
 @Getter
@@ -9,6 +12,10 @@ import java.util.List;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @Entity
+@NamedEntityGraph(
+        name = "Trainer.withTrainees",
+        attributeNodes = @NamedAttributeNode("trainees")
+)
 @Table(name="trainer")
 public class Trainer{
     @Id
@@ -26,6 +33,9 @@ public class Trainer{
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     @ToString.Include
     private User user;
+
+    @ManyToMany(mappedBy = "trainers")
+    private Set<Trainee> trainees = new HashSet<>();
 
     @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Training> trainings;

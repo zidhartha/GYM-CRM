@@ -1,5 +1,6 @@
 package com.gym.crm.facade;
 
+import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainee.TraineeCreateDto;
 import com.gym.crm.dto.trainee.TraineeProfileDto;
 import com.gym.crm.dto.trainee.TraineeUpdateDto;
@@ -28,21 +29,18 @@ public class GymFacade {
     private final TrainingTypeService trainingTypeService;
     private final UserService userService;
 
-    // --- Auth ---
+
     public void authenticate(String username, String password) {
         userService.authenticate(username, password);
     }
 
-    public void assertIdentity(String authUsername, String username) {
-        userService.assertIdentity(authUsername, username);
-    }
+
 
     public void updatePassword(String username, String newPassword) {
         userService.updatePassword(username, newPassword);
     }
 
-    // --- Trainee ---
-    public Map<String, String> createTrainee(TraineeCreateDto dto) {
+    public RegistrationResponseDto createTrainee(TraineeCreateDto dto) {
         return traineeService.createTrainee(dto);
     }
 
@@ -62,8 +60,7 @@ public class GymFacade {
         return traineeService.updateTraineeTrainers(username, trainerUsernames);
     }
 
-    // --- Trainer ---
-    public Map<String, String> createTrainer(TrainerCreateDto dto) {
+    public RegistrationResponseDto createTrainer(TrainerCreateDto dto) {
         return trainerService.createTrainer(dto);
     }
 
@@ -79,7 +76,7 @@ public class GymFacade {
         return trainerService.getUnassignedTrainers(username);
     }
 
-    // --- Training ---
+
     public void createTraining(TrainingCreateDto dto) {
         trainingService.createTraining(dto);
     }
@@ -95,12 +92,11 @@ public class GymFacade {
         return trainingService.getTrainerTrainings(username, from, to, traineeName);
     }
 
-    // --- Training Types ---
+
     public TrainingTypeListDto getAllTrainingTypes() {
         return trainingTypeService.getAllTrainingTypes();
     }
 
-    // --- User ---
     public void activateUser(String username) {
         userService.activateUser(username);
     }

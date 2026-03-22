@@ -1,4 +1,6 @@
 package org.example.FacadeTest;
+
+import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainee.TraineeCreateDto;
 import com.gym.crm.dto.trainee.TraineeProfileDto;
 import com.gym.crm.dto.trainee.TraineeUpdateDto;
@@ -7,6 +9,7 @@ import com.gym.crm.dto.trainer.TrainerListDto;
 import com.gym.crm.dto.trainer.TrainerProfileDto;
 import com.gym.crm.dto.trainer.TrainerUpdateDto;
 import com.gym.crm.dto.training.TrainingCreateDto;
+import com.gym.crm.dto.trainingType.TrainingTypeListDto;
 import com.gym.crm.facade.GymFacade;
 import com.gym.crm.service.*;
 import org.junit.jupiter.api.Test;
@@ -17,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -28,63 +30,65 @@ class GymFacadeTest {
     @Mock private TraineeService traineeService;
     @Mock private TrainerService trainerService;
     @Mock private TrainingService trainingService;
+    @Mock private TrainingTypeService trainingTypeService;
     @Mock private UserService userService;
 
     @InjectMocks private GymFacade gymFacade;
 
     @Test
     void authenticate_shouldDelegateToUserService() {
-        gymFacade.authenticate("john.doe", "password");
-        verify(userService).authenticate("john.doe", "password");
-    }
-
-    @Test
-    void assertIdentity_shouldDelegateToUserService() {
-        gymFacade.assertIdentity("john.doe", "john.doe");
-        verify(userService).assertIdentity("john.doe", "john.doe");
+        gymFacade.authenticate("gio.janelidze", "password");
+        verify(userService).authenticate("gio.janelidze", "password");
     }
 
     @Test
     void updatePassword_shouldDelegateToUserService() {
-        gymFacade.updatePassword("john.doe", "newpass");
-        verify(userService).updatePassword("john.doe", "newpass");
+        gymFacade.updatePassword("gio.janelidze", "newpass");
+        verify(userService).updatePassword("gio.janelidze", "newpass");
     }
 
     @Test
     void activateUser_shouldDelegateToUserService() {
-        gymFacade.activateUser("john.doe");
-        verify(userService).activateUser("john.doe");
+        gymFacade.activateUser("gio.janelidze");
+        verify(userService).activateUser("gio.janelidze");
     }
 
     @Test
     void deactivateUser_shouldDelegateToUserService() {
-        gymFacade.deactivateUser("john.doe");
-        verify(userService).deactivateUser("john.doe");
+        gymFacade.deactivateUser("gio.janelidze");
+        verify(userService).deactivateUser("gio.janelidze");
     }
 
     @Test
-    void createTrainee_shouldReturnUsernameAndPassword() {
-        TraineeCreateDto dto = new TraineeCreateDto("John", "Doe", null, null);
-        when(traineeService.createTrainee(dto))
-                .thenReturn(Map.of("username", "john.doe", "password", "pass123"));
+    void createTrainee_shouldReturnRegistrationResponse() {
+        TraineeCreateDto dto = new TraineeCreateDto("Gio", "Janelidze", null, null);
+        RegistrationResponseDto expected = RegistrationResponseDto.builder()
+                .username("gio.janelidze")
+                .password("pass123")
+                .build();
+        when(traineeService.createTrainee(dto)).thenReturn(expected);
 
-        Map<String, String> result = gymFacade.createTrainee(dto);
+        RegistrationResponseDto result = gymFacade.createTrainee(dto);
 
-        assertEquals("john.doe", result.get("username"));
-        assertEquals("pass123", result.get("password"));
+        assertEquals("gio.janelidze", result.getUsername());
+        assertEquals("pass123", result.getPassword());
         verify(traineeService).createTrainee(dto);
     }
 
     @Test
     void getTraineeProfile_shouldReturnProfile() {
-        TraineeProfileDto expected = new TraineeProfileDto(
-                "John", "Doe", null, null, true, new TrainerListDto(List.of()));
-        when(traineeService.getTraineeProfile("john.doe")).thenReturn(expected);
+        TraineeProfileDto expected = TraineeProfileDto.builder()
+                .firstName("Gio")
+                .lastName("Janelidze")
+                .isActive(true)
+                .trainers(new TrainerListDto(List.of()))
+                .build();
+        when(traineeService.getTraineeProfile("gio.janelidze")).thenReturn(expected);
 
-        TraineeProfileDto result = gymFacade.getTraineeProfile("john.doe");
+        TraineeProfileDto result = gymFacade.getTraineeProfile("gio.janelidze");
 
         assertEquals(expected, result);
-        verify(traineeService).getTraineeProfile("john.doe");
+        verify(traineeService).getTraineeProfile("gio.janelidze");
     }
 
     @Test
@@ -99,57 +103,69 @@ class GymFacadeTest {
     @Test
     void updateTraineeProfile_shouldReturnUpdatedProfile() {
         TraineeUpdateDto dto = new TraineeUpdateDto();
-        TraineeProfileDto expected = new TraineeProfileDto(
-                "John", "Smith", null, null, true, new TrainerListDto(List.of()));
-        when(traineeService.updateTraineeProfile(dto, "john.doe")).thenReturn(expected);
+        TraineeProfileDto expected = TraineeProfileDto.builder()
+                .firstName("Gio")
+                .lastName("Janelidze")
+                .isActive(true)
+                .trainers(new TrainerListDto(List.of()))
+                .build();
+        when(traineeService.updateTraineeProfile(dto, "gio.janelidze")).thenReturn(expected);
 
-        TraineeProfileDto result = gymFacade.updateTraineeProfile(dto, "john.doe");
+        TraineeProfileDto result = gymFacade.updateTraineeProfile(dto, "gio.janelidze");
 
         assertEquals(expected, result);
-        verify(traineeService).updateTraineeProfile(dto, "john.doe");
+        verify(traineeService).updateTraineeProfile(dto, "gio.janelidze");
     }
 
     @Test
     void deleteTrainee_shouldDelegateToTraineeService() {
-        gymFacade.deleteTrainee("john.doe");
-        verify(traineeService).deleteTrainee("john.doe");
+        gymFacade.deleteTrainee("gio.janelidze");
+        verify(traineeService).deleteTrainee("gio.janelidze");
     }
 
     @Test
     void updateTraineeTrainers_shouldReturnUpdatedTrainerList() {
         List<String> trainerUsernames = List.of("trainer1", "trainer2");
         TrainerListDto expected = new TrainerListDto(List.of());
-        when(traineeService.updateTraineeTrainers("john.doe", trainerUsernames))
-                .thenReturn(expected);
+        when(traineeService.updateTraineeTrainers("gio.janelidze", trainerUsernames)).thenReturn(expected);
 
-        TrainerListDto result = gymFacade.updateTraineeTrainers("john.doe", trainerUsernames);
+        TrainerListDto result = gymFacade.updateTraineeTrainers("gio.janelidze", trainerUsernames);
 
         assertEquals(expected, result);
-        verify(traineeService).updateTraineeTrainers("john.doe", trainerUsernames);
+        verify(traineeService).updateTraineeTrainers("gio.janelidze", trainerUsernames);
     }
 
     @Test
-    void createTrainer_shouldReturnUsernameAndPassword() {
-        TrainerCreateDto dto = new TrainerCreateDto("Jane", "Smith", "Yoga");
-        when(trainerService.createTrainer(dto))
-                .thenReturn(Map.of("username", "jane.smith", "password", "pass456"));
+    void createTrainer_shouldReturnRegistrationResponse() {
+        TrainerCreateDto dto = new TrainerCreateDto("Gio", "Jincharadze", "Yoga");
+        RegistrationResponseDto expected = RegistrationResponseDto.builder()
+                .username("gio.jincharadze")
+                .password("pass456")
+                .build();
+        when(trainerService.createTrainer(dto)).thenReturn(expected);
 
-        Map<String, String> result = gymFacade.createTrainer(dto);
+        RegistrationResponseDto result = gymFacade.createTrainer(dto);
 
-        assertEquals("jane.smith", result.get("username"));
+        assertEquals("gio.jincharadze", result.getUsername());
+        assertEquals("pass456", result.getPassword());
         verify(trainerService).createTrainer(dto);
     }
 
     @Test
     void getTrainerProfile_shouldReturnProfile() {
-        TrainerProfileDto expected = new TrainerProfileDto(
-                "jane.smith", "Jane", "Smith", "Yoga", true, null);
-        when(trainerService.getTrainerByUsername("jane.smith")).thenReturn(expected);
+        TrainerProfileDto expected = TrainerProfileDto.builder()
+                .username("gio.jincharadze")
+                .firstName("Gio")
+                .lastName("Jincharadze")
+                .specialization("Yoga")
+                .isActive(true)
+                .build();
+        when(trainerService.getTrainerByUsername("gio.jincharadze")).thenReturn(expected);
 
-        TrainerProfileDto result = gymFacade.getTrainerProfile("jane.smith");
+        TrainerProfileDto result = gymFacade.getTrainerProfile("gio.jincharadze");
 
         assertEquals(expected, result);
-        verify(trainerService).getTrainerByUsername("jane.smith");
+        verify(trainerService).getTrainerByUsername("gio.jincharadze");
     }
 
     @Test
@@ -164,25 +180,30 @@ class GymFacadeTest {
     @Test
     void updateTrainer_shouldReturnUpdatedProfile() {
         TrainerUpdateDto dto = new TrainerUpdateDto();
-        TrainerProfileDto expected = new TrainerProfileDto(
-                "jane.smith", "Jane", "Updated", "Yoga", true, null);
-        when(trainerService.updateTrainer(dto, "jane.smith")).thenReturn(expected);
+        TrainerProfileDto expected = TrainerProfileDto.builder()
+                .username("gio.jincharadze")
+                .firstName("Gio")
+                .lastName("Jincharadze")
+                .specialization("Yoga")
+                .isActive(true)
+                .build();
+        when(trainerService.updateTrainer(dto, "gio.jincharadze")).thenReturn(expected);
 
-        TrainerProfileDto result = gymFacade.updateTrainer(dto, "jane.smith");
+        TrainerProfileDto result = gymFacade.updateTrainer(dto, "gio.jincharadze");
 
         assertEquals(expected, result);
-        verify(trainerService).updateTrainer(dto, "jane.smith");
+        verify(trainerService).updateTrainer(dto, "gio.jincharadze");
     }
 
     @Test
     void getUnassignedTrainers_shouldReturnTrainerList() {
         TrainerListDto expected = new TrainerListDto(List.of());
-        when(trainerService.getUnassignedTrainers("john.doe")).thenReturn(expected);
+        when(trainerService.getUnassignedTrainers("gio.janelidze")).thenReturn(expected);
 
-        TrainerListDto result = gymFacade.getUnassignedTrainers("john.doe");
+        TrainerListDto result = gymFacade.getUnassignedTrainers("gio.janelidze");
 
         assertEquals(expected, result);
-        verify(trainerService).getUnassignedTrainers("john.doe");
+        verify(trainerService).getUnassignedTrainers("gio.janelidze");
     }
 
     @Test
@@ -194,25 +215,36 @@ class GymFacadeTest {
 
     @Test
     void getTraineeTrainings_shouldReturnList() {
-        when(trainingService.getTraineeTrainings("john.doe", null, null, null, null))
+        when(trainingService.getTraineeTrainings("gio.janelidze", null, null, null, null))
                 .thenReturn(List.of());
 
-        var result = gymFacade.getTraineeTrainings("john.doe", null, null, null, null);
+        var result = gymFacade.getTraineeTrainings("gio.janelidze", null, null, null, null);
 
         assertNotNull(result);
-        verify(trainingService).getTraineeTrainings("john.doe", null, null, null, null);
+        verify(trainingService).getTraineeTrainings("gio.janelidze", null, null, null, null);
     }
 
     @Test
     void getTrainerTrainings_shouldReturnList() {
         LocalDate from = LocalDate.of(2024, 1, 1);
         LocalDate to = LocalDate.of(2024, 12, 31);
-        when(trainingService.getTrainerTrainings("jane.smith", from, to, null))
+        when(trainingService.getTrainerTrainings("gio.jincharadze", from, to, null))
                 .thenReturn(List.of());
 
-        var result = gymFacade.getTrainerTrainings("jane.smith", from, to, null);
+        var result = gymFacade.getTrainerTrainings("gio.jincharadze", from, to, null);
 
         assertNotNull(result);
-        verify(trainingService).getTrainerTrainings("jane.smith", from, to, null);
+        verify(trainingService).getTrainerTrainings("gio.jincharadze", from, to, null);
+    }
+
+    @Test
+    void getAllTrainingTypes_shouldReturnList() {
+        TrainingTypeListDto expected = new TrainingTypeListDto(List.of());
+        when(trainingTypeService.getAllTrainingTypes()).thenReturn(expected);
+
+        TrainingTypeListDto result = gymFacade.getAllTrainingTypes();
+
+        assertEquals(expected, result);
+        verify(trainingTypeService).getAllTrainingTypes();
     }
 }

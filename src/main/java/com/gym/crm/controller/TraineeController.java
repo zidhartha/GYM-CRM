@@ -1,5 +1,7 @@
 package com.gym.crm.controller;
 
+import com.gym.crm.dto.authentication.ActivationDto;
+import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainee.TraineeCreateDto;
 import com.gym.crm.dto.trainee.TraineeProfileDto;
 import com.gym.crm.dto.trainee.TraineeUpdateDto;
@@ -17,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,7 +32,7 @@ public class TraineeController {
 
     @PostMapping
     @Operation(summary = "Create a trainee")
-    public ResponseEntity<Map<String,String>> createTrainee(@RequestBody @Valid TraineeCreateDto traineeCreateDto){
+    public ResponseEntity<RegistrationResponseDto> createTrainee(@RequestBody @Valid TraineeCreateDto traineeCreateDto){
         return ResponseEntity.status(201).body(traineeService.createTrainee(traineeCreateDto));
     }
 
@@ -43,7 +44,6 @@ public class TraineeController {
             @PathVariable String username
     ){
         userService.authenticate(authUsername,authPassword);
-        userService.assertIdentity(authUsername,username);
 
         return ResponseEntity.ok(traineeService.getTraineeProfile(username));
     }
@@ -57,7 +57,6 @@ public class TraineeController {
             @RequestBody @Valid TraineeUpdateDto traineeUpdateDto
     ){
         userService.authenticate(authUsername,authPassword);
-        userService.assertIdentity(authUsername,username);
         return ResponseEntity.ok(traineeService.updateTraineeProfile(traineeUpdateDto,authUsername));
     }
 
@@ -67,12 +66,11 @@ public class TraineeController {
             @RequestHeader("X-Username") String authUsername,
             @RequestHeader("X-Password") String authPassword,
             @PathVariable String username,
-            @RequestParam boolean isActive
-    ){
+            @RequestBody  ActivationDto activationDto
+            ){
         userService.authenticate(authUsername,authPassword);
-        userService.assertIdentity(authUsername,username);
 
-        if(!isActive) {
+        if(!activationDto.getIsActive()) {
             userService.deactivateUser(username);
         }else {
             userService.activateUser(username);
@@ -88,9 +86,6 @@ public class TraineeController {
             @PathVariable String username
     ){
         userService.authenticate(authUsername,authPassword);
-        userService.assertIdentity(authUsername,username);
-
-
         traineeService.deleteTrainee(username);
         return ResponseEntity.ok().build();
     }
@@ -107,7 +102,6 @@ public class TraineeController {
             @RequestParam(required = false) String trainingTypeName) {
 
         userService.authenticate(authUsername, authPassword);
-        userService.assertIdentity(authUsername, username);
 
         return ResponseEntity.ok(trainingService.getTraineeTrainings(username, from, to, trainerName, trainingTypeName));
     }
@@ -120,7 +114,6 @@ public class TraineeController {
             @PathVariable String username) {
 
         userService.authenticate(authUsername, authPassword);
-        userService.assertIdentity(authUsername, username);
 
         return ResponseEntity.ok(trainerService.getUnassignedTrainers(username));
     }
@@ -134,7 +127,6 @@ public class TraineeController {
             @RequestBody List<String> trainerUsernames
             ){
         userService.authenticate(authUsername, authPassword);
-        userService.assertIdentity(authUsername, username);
 
         return ResponseEntity.ok(traineeService.updateTraineeTrainers(username,trainerUsernames));
     }

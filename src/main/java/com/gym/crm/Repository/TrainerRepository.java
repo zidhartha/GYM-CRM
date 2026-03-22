@@ -15,6 +15,7 @@ public interface TrainerRepository extends JpaRepository<Trainer,Long>{
             "(select t.trainer from Training t where t.trainee.user.username = :traineeUsername) ")
     List<Trainer> findTrainersNotAssignedToTrainee(@Param("traineeUsername") String traineeUsername);
 
+    @EntityGraph(value = "Trainer.withTrainees")
     List<Trainer> findAll();
 
     @EntityGraph(attributePaths = {"user", "specialization"})
@@ -25,13 +26,4 @@ public interface TrainerRepository extends JpaRepository<Trainer,Long>{
 
     List<Trainer> findAllByUserUsernameIn(Set<String> usernames);
 
-    @Query("""
-        SELECT new com.gym.crm.dto.trainee.TraineeListItemDto(
-            tre.user.username, tre.user.firstName, tre.user.lastName)
-        FROM Training tr
-        JOIN tr.trainee tre
-        JOIN tr.trainer trr
-        WHERE trr.user.username = :trainerUsername
-        """)
-    List<TraineeListItemDto> findTrainerTrainees(@Param("trainerUsername") String trainerUsername);
 }

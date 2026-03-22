@@ -26,7 +26,7 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/change-password")
+    @PutMapping("/password")
     @Operation(summary = "Change Password")
     public ResponseEntity<Void> changePassword(@RequestBody @Valid ChangePasswordRequestDto request) {
         userService.authenticate(new LoginRequestDto(request.getUsername(), request.getPassword()));

@@ -2,9 +2,13 @@ package org.example.ServiceTests;
 
 import com.gym.crm.Repository.TrainerRepository;
 import com.gym.crm.Repository.TrainingTypeRepository;
+import com.gym.crm.Util.EntityMapper;
 import com.gym.crm.Util.PasswordGenerator;
 import com.gym.crm.Util.UsernameGenerator;
+import com.gym.crm.dto.authentication.RegistrationResponseDto;
+import com.gym.crm.dto.trainee.TraineeListDto;
 import com.gym.crm.dto.trainer.TrainerCreateDto;
+import com.gym.crm.dto.trainer.TrainerListDto;
 import com.gym.crm.dto.trainer.TrainerProfileDto;
 import com.gym.crm.dto.trainer.TrainerUpdateDto;
 import com.gym.crm.model.Trainer;
@@ -17,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +36,7 @@ class TrainerServiceTest {
     @Mock private TrainingTypeRepository trainingTypeRepository;
     @Mock private PasswordGenerator passwordGenerator;
     @Mock private UsernameGenerator usernameGenerator;
+    @Mock private EntityMapper entityMapper;
 
     @InjectMocks private TrainerService trainerService;
 
@@ -48,10 +54,10 @@ class TrainerServiceTest {
         Trainer saved = new Trainer(user, type);
         when(trainerRepository.save(any())).thenReturn(saved);
 
-        var result = trainerService.createTrainer(dto);
+        RegistrationResponseDto result = trainerService.createTrainer(dto);
 
-        assertEquals("Jane.Smith", result.get("username"));
-        assertEquals("pass456", result.get("password"));
+        assertEquals("Jane.Smith", result.getUsername());
+        assertEquals("pass456", result.getPassword());
     }
 
     @Test
@@ -70,9 +76,10 @@ class TrainerServiceTest {
         User user = new User("Jane", "Smith", "jane.smith", "pass");
         user.setActive(true);
         Trainer trainer = new Trainer(user, type);
+        trainer.setTrainees(new HashSet<>());
 
         when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.of(trainer));
-        when(trainerRepository.findTrainerTrainees("jane.smith")).thenReturn(List.of());
+        when(entityMapper.mapToTraineeListDto(any())).thenReturn(new TraineeListDto(List.of()));
 
         TrainerProfileDto result = trainerService.getTrainerByUsername("jane.smith");
 
@@ -94,13 +101,16 @@ class TrainerServiceTest {
         type.setName("Yoga");
         User user = new User("Jane", "Smith", "jane.smith", "pass");
         Trainer trainer = new Trainer(user, type);
+        trainer.setTrainees(new HashSet<>());
+
         TrainerUpdateDto dto = new TrainerUpdateDto();
         dto.setFirstName("Janet");
         dto.setLastName("Smith");
+        dto.setIsActive(true);
 
         when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.of(trainer));
         when(trainerRepository.save(any())).thenReturn(trainer);
-        when(trainerRepository.findTrainerTrainees("jane.smith")).thenReturn(List.of());
+        when(entityMapper.mapToTraineeListDto(any())).thenReturn(new TraineeListDto(List.of()));
 
         TrainerProfileDto result = trainerService.updateTrainer(dto, "jane.smith");
 
@@ -117,12 +127,14 @@ class TrainerServiceTest {
 
     @Test
     void getUnassignedTrainers_shouldReturnTrainerList() {
-        when(trainerRepository.findTrainersNotAssignedToTrainee("john.doe"))
+        when(trainerRepository.findTrainersNotAssignedToTrainee("gio.janelidze"))
                 .thenReturn(List.of());
+        when(entityMapper.mapToTrainerListDto(any()))
+                .thenReturn(new TrainerListDto(List.of()));
 
-        var result = trainerService.getUnassignedTrainers("john.doe");
+        TrainerListDto result = trainerService.getUnassignedTrainers("gio.janelidze");
 
         assertNotNull(result);
-        verify(trainerRepository).findTrainersNotAssignedToTrainee("john.doe");
+        verify(trainerRepository).findTrainersNotAssignedToTrainee("gio.janelidze");
     }
 }

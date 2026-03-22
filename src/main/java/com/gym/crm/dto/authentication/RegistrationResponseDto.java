@@ -1,4 +1,4 @@
-package com.gym.crm.dto.trainee;
+package com.gym.crm.dto.authentication;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,11 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class TraineeListItemDto {
+public class RegistrationResponseDto {
     private String username;
-    private String firstname;
-    private String lastname;
+    private String password;
+
 }

@@ -3,48 +3,34 @@ package com.gym.crm;
 import com.gym.crm.config.AppConfig;
 import com.gym.crm.config.WebAppConfig;
 import com.gym.crm.interceptor.TransactionLoggingFilter;
-import org.apache.catalina.Context;
-import org.apache.catalina.startup.Tomcat;
-import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
-import org.springframework.web.servlet.DispatcherServlet;
+import jakarta.servlet.Filter;
+import org.springframework.lang.NonNull;
+import org.springframework.web.filter.CharacterEncodingFilter;
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
-public class GymApplication {
-    public static void main(String[] args) throws Exception {
-        Tomcat tomcat = new Tomcat();
-        tomcat.setPort(8080);
-        tomcat.getConnector();
+public class GymApplication extends AbstractAnnotationConfigDispatcherServletInitializer {
 
-        AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
-        context.register(AppConfig.class, WebAppConfig.class);
-
-        DispatcherServlet dispatcherServlet = new DispatcherServlet(context);
-        Context ctx = tomcat.addContext("", null);
-        Tomcat.addServlet(ctx, "dispatcher", dispatcherServlet);
-        ctx.addServletMappingDecoded("/", "dispatcher");
-
-        TransactionLoggingFilter filter = new TransactionLoggingFilter();
-        ctx.addFilterDef(createFilterDef(filter));
-        ctx.addFilterMap(createFilterMap());
-
-        tomcat.start();
-        System.out.println("Server started on http://localhost:8080");
-        tomcat.getServer().await();
+    @Override
+    protected Class<?>[] getRootConfigClasses() {
+        return new Class<?>[]{AppConfig.class};
     }
 
-    private static org.apache.tomcat.util.descriptor.web.FilterDef createFilterDef(
-            TransactionLoggingFilter filter) {
-        org.apache.tomcat.util.descriptor.web.FilterDef filterDef =
-                new org.apache.tomcat.util.descriptor.web.FilterDef();
-        filterDef.setFilterName("transactionLoggingFilter");
-        filterDef.setFilter(filter);
-        return filterDef;
+    @Override
+    protected Class<?>[] getServletConfigClasses() {
+        return new Class<?>[]{WebAppConfig.class};
     }
 
-    private static org.apache.tomcat.util.descriptor.web.FilterMap createFilterMap() {
-        org.apache.tomcat.util.descriptor.web.FilterMap filterMap =
-                new org.apache.tomcat.util.descriptor.web.FilterMap();
-        filterMap.setFilterName("transactionLoggingFilter");
-        filterMap.addURLPattern("/*");
-        return filterMap;
+    @NonNull
+    @Override
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
+
+    @Override
+    protected Filter[] getServletFilters() {
+        CharacterEncodingFilter encodingFilter = new CharacterEncodingFilter();
+        encodingFilter.setEncoding("UTF-8");
+        encodingFilter.setForceEncoding(true);
+        return new Filter[]{encodingFilter, new TransactionLoggingFilter()};
     }
 }

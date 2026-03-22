@@ -1,5 +1,7 @@
 package com.gym.crm.controller;
 
+import com.gym.crm.dto.authentication.ActivationDto;
+import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainer.TrainerCreateDto;
 import com.gym.crm.dto.trainer.TrainerProfileDto;
 import com.gym.crm.dto.trainer.TrainerUpdateDto;
@@ -15,7 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -27,7 +29,7 @@ public class TrainerController {
     private final TrainingService trainingService;
     @PostMapping
     @Operation(summary="Creating a trainer")
-    public ResponseEntity<Map<String,String>> createTrainer(
+    public ResponseEntity<RegistrationResponseDto> createTrainer(
             @RequestBody TrainerCreateDto trainerCreateDto
             ){
         return ResponseEntity.status(201).body(trainerService.createTrainer(trainerCreateDto));
@@ -41,7 +43,6 @@ public class TrainerController {
             @PathVariable("username") String username
     ){
         userService.authenticate(authUsername,authPassword);
-        userService.assertIdentity(authUsername,username);
 
         return ResponseEntity.status(200).body(trainerService.getTrainerByUsername(username));
     }
@@ -55,7 +56,6 @@ public class TrainerController {
             @RequestBody @Valid TrainerUpdateDto trainerUpdateDto
             ){
         userService.authenticate(authUsername,authPassword);
-        userService.assertIdentity(authUsername,username);
 
         return ResponseEntity.ok().body(trainerService.updateTrainer(trainerUpdateDto,username));
     }
@@ -66,12 +66,11 @@ public class TrainerController {
             @RequestHeader("X-Username") String authUsername,
             @RequestHeader("X-Password") String authPassword,
             @PathVariable String username,
-            @RequestParam boolean isActive
-    ){
+            @RequestBody  ActivationDto activationDto
+            ){
         userService.authenticate(authUsername,authPassword);
-        userService.assertIdentity(authUsername,username);
 
-        if(!isActive) {
+        if(!activationDto.getIsActive()) {
             userService.deactivateUser(username);
         }else {
             userService.activateUser(username);
@@ -90,7 +89,6 @@ public class TrainerController {
             @RequestParam(required = false) String traineeName) {
 
         userService.authenticate(authUsername, authPassword);
-        userService.assertIdentity(authUsername, username);
 
         return ResponseEntity.ok(trainingService.getTrainerTrainings(username, from, to, traineeName));
     }

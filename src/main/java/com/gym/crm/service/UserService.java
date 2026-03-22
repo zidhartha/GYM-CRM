@@ -30,11 +30,6 @@ public class UserService {
     }
 
 
-    public void assertIdentity(String authUsername,String currUsername){
-        if(!authUsername.equals(currUsername)){
-            throw new AccessDeniedException("Access denied: you can only access your own profile.");
-        }
-    }
 
     @Transactional
     public void updatePassword(String username, String newPassword) {

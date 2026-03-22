@@ -1,10 +1,14 @@
 package org.example.ServiceTests;
+
 import com.gym.crm.Repository.TraineeRepository;
+import com.gym.crm.Util.EntityMapper;
 import com.gym.crm.Util.PasswordGenerator;
 import com.gym.crm.Util.UsernameGenerator;
+import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainee.TraineeCreateDto;
 import com.gym.crm.dto.trainee.TraineeProfileDto;
 import com.gym.crm.dto.trainee.TraineeUpdateDto;
+import com.gym.crm.dto.trainer.TrainerListDto;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
 import com.gym.crm.service.TraineeService;
@@ -13,7 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,38 +31,40 @@ class TraineeServiceTest {
     @Mock private TraineeRepository traineeRepository;
     @Mock private PasswordGenerator passwordGenerator;
     @Mock private UsernameGenerator usernameGenerator;
+    @Mock private EntityMapper entityMapper;
 
     @InjectMocks private TraineeService traineeService;
 
     @Test
     void createTrainee_shouldReturnUsernameAndPassword() {
-        TraineeCreateDto dto = new TraineeCreateDto("John", "Doe", null, null);
+        TraineeCreateDto dto = new TraineeCreateDto("Gio", "Janelidze", null, null);
         when(passwordGenerator.generatePassword()).thenReturn("pass123");
-        when(usernameGenerator.generateUsername("John", "Doe")).thenReturn("John.Doe");
+        when(usernameGenerator.generateUsername("Gio", "Janelidze")).thenReturn("gio.janelidze");
 
-        User user = new User("John", "Doe", "John.Doe", "pass123");
+        User user = new User("Gio", "Janelidze", "gio.janelidze", "pass123");
         Trainee saved = new Trainee(user, null, null);
         when(traineeRepository.save(any())).thenReturn(saved);
 
-        var result = traineeService.createTrainee(dto);
+        RegistrationResponseDto result = traineeService.createTrainee(dto);
 
-        assertEquals("John.Doe", result.get("username"));
-        assertEquals("pass123", result.get("password"));
+        assertEquals("gio.janelidze", result.getUsername());
+        assertEquals("pass123", result.getPassword());
     }
 
     @Test
     void getTraineeProfile_shouldReturnProfile() {
-        User user = new User("John", "Doe", "john.doe", "pass");
+        User user = new User("Gio", "Janelidze", "gio.janelidze", "pass");
         user.setActive(true);
         Trainee trainee = new Trainee(user, null, null);
+        trainee.setTrainers(new ArrayList<>());
 
-        when(traineeRepository.findByUserUsername("john.doe")).thenReturn(Optional.of(trainee));
-        when(traineeRepository.findTraineeTrainers("john.doe")).thenReturn(List.of());
+        when(traineeRepository.findByUserUsername("gio.janelidze")).thenReturn(Optional.of(trainee));
+        when(entityMapper.mapToTrainerListDto(any())).thenReturn(new TrainerListDto(List.of()));
 
-        TraineeProfileDto result = traineeService.getTraineeProfile("john.doe");
+        TraineeProfileDto result = traineeService.getTraineeProfile("gio.janelidze");
 
-        assertEquals("John", result.getFirstName());
-        assertEquals("Doe", result.getLastName());
+        assertEquals("Gio", result.getFirstName());
+        assertEquals("Janelidze", result.getLastName());
     }
 
     @Test
@@ -71,19 +77,21 @@ class TraineeServiceTest {
 
     @Test
     void updateTraineeProfile_shouldUpdateAndReturn() {
-        User user = new User("John", "Doe", "john.doe", "pass");
+        User user = new User("Gio", "Janelidze", "gio.janelidze", "pass");
         Trainee trainee = new Trainee(user, null, null);
+        trainee.setTrainers(new ArrayList<>());
+
         TraineeUpdateDto dto = new TraineeUpdateDto();
-        dto.setFirstName("Johnny");
-        dto.setLastName("Doe");
+        dto.setFirstName("Giorgi");
+        dto.setLastName("Janelidze");
 
-        when(traineeRepository.findByUserUsername("john.doe")).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findByUserUsername("gio.janelidze")).thenReturn(Optional.of(trainee));
         when(traineeRepository.save(any())).thenReturn(trainee);
-        when(traineeRepository.findTraineeTrainers("john.doe")).thenReturn(List.of());
+        when(entityMapper.mapToTrainerListDto(any())).thenReturn(new TrainerListDto(List.of()));
 
-        TraineeProfileDto result = traineeService.updateTraineeProfile(dto, "john.doe");
+        TraineeProfileDto result = traineeService.updateTraineeProfile(dto, "gio.janelidze");
 
-        assertEquals("Johnny", result.getFirstName());
+        assertEquals("Giorgi", result.getFirstName());
     }
 
     @Test
@@ -96,8 +104,8 @@ class TraineeServiceTest {
 
     @Test
     void deleteTrainee_shouldCallRepository() {
-        traineeService.deleteTrainee("john.doe");
-        verify(traineeRepository).deleteByUserUsername("john.doe");
+        traineeService.deleteTrainee("gio.janelidze");
+        verify(traineeRepository).deleteByUserUsername("gio.janelidze");
     }
 
     @Test
@@ -105,6 +113,6 @@ class TraineeServiceTest {
         when(traineeRepository.findByUserUsername("unknown")).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class,
-                () -> traineeService.updateTraineeTrainers("unknown", List.of("trainer1")));
+                () -> traineeService.updateTraineeTrainers("unknown", List.of("gio.jincharadze")));
     }
 }

@@ -2,6 +2,8 @@ package com.gym.crm.service;
 
 import com.gym.crm.Repository.TrainerRepository;
 import com.gym.crm.Repository.TrainingTypeRepository;
+import com.gym.crm.Util.EntityMapper;
+import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainee.TraineeListDto;
 import com.gym.crm.dto.trainer.*;
 import com.gym.crm.Util.PasswordGenerator;
@@ -17,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Validated
@@ -29,11 +30,11 @@ public class TrainerService {
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainerRepository trainerRepository;
     private final UsernameGenerator usernameGenerator;
-
+    private final EntityMapper entityMapper;
 
 
     @Transactional
-    public Map<String,String> createTrainer(@Valid TrainerCreateDto dto) {
+    public RegistrationResponseDto createTrainer(@Valid TrainerCreateDto dto) {
 
         log.info("Creating trainer: {} {}, specialization={}",
                 dto.getFirstname(),
@@ -44,7 +45,7 @@ public class TrainerService {
         User user = new User(
                 dto.getFirstname(),
                 dto.getLastname(),
-                usernameGenerator.generateUsername(dto.getFirstname(),dto.getLastname()),
+                usernameGenerator.generateUsername(dto.getFirstname(), dto.getLastname()),
                 rawPassword
         );
 
@@ -62,10 +63,11 @@ public class TrainerService {
                 saved.getUser().getUsername(),
                 saved.getSpecialization());
 
-        return Map.of(
-                "username", saved.getUser().getUsername(),
-                "password", rawPassword
-        );
+        return RegistrationResponseDto.builder()
+                .username(saved.getUser().getUsername())
+                .password(rawPassword)
+                .build();
+
     }
 
     @Transactional(readOnly = true)
@@ -77,16 +79,14 @@ public class TrainerService {
                 () -> new IllegalArgumentException("Trainer not found: " + username)
         );
 
-
-        TraineeListDto trainees = new TraineeListDto(trainerRepository.findTrainerTrainees(username));
-        return new TrainerProfileDto(
-                trainer.getUser().getFirstName(),
-                trainer.getUser().getLastName(),
-                trainer.getUser().getUsername(),
-                trainer.getSpecialization().getName(),
-                trainer.getUser().isActive(),
-                trainees
-        );
+        return TrainerProfileDto.builder()
+                .firstName(trainer.getUser().getFirstName())
+                .lastName(trainer.getUser().getLastName())
+                .username(trainer.getUser().getUsername())
+                .specialization(trainer.getSpecialization().getName())
+                .isActive(trainer.getUser().isActive())
+                .trainees(entityMapper.mapToTraineeListDto(trainer.getTrainees()))
+                .build();
     }
 
     @Transactional
@@ -102,47 +102,37 @@ public class TrainerService {
 
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
-
-        trainerRepository.save(trainer);
-        log.info("Trainer updated: username={}, firstname={}, lastname={}",
-                username,
-                trainer.getUser().getFirstName(),
-                trainer.getUser().getLastName());
-
-        TraineeListDto trainees = new TraineeListDto(trainerRepository.findTrainerTrainees(username));
-        return new TrainerProfileDto(
-                trainer.getUser().getFirstName(),
-                trainer.getUser().getLastName(),
-                username,
-                trainer.getSpecialization().getName(),
-                trainer.getUser().isActive(),
-                trainees
-        );
+        user.setActive(dto.getIsActive());
+        Trainer updated = trainerRepository.save(trainer);
+        return TrainerProfileDto.builder()
+                .firstName(updated.getUser().getFirstName())
+                .lastName(updated.getUser().getLastName())
+                .username(username)
+                .specialization(updated.getSpecialization().getName())
+                .isActive(updated.getUser().isActive())
+                .trainees(entityMapper.mapToTraineeListDto(updated.getTrainees()))
+                .build();
     }
 
     @Transactional(readOnly = true)
     public List<TrainerProfileDto> selectAllTrainers() {
         return trainerRepository.findAll()
                 .stream()
-                .map(t -> new TrainerProfileDto(
-                        t.getUser().getUsername(),
-                        t.getUser().getFirstName(),
-                        t.getUser().getLastName(),
-                        t.getSpecialization().getName(),
-                        t.getUser().isActive(),
-                        new TraineeListDto(trainerRepository.findTrainerTrainees(t.getUser().getUsername()))
-                ))
-                .collect(Collectors.toList());
+                .map(trainer -> TrainerProfileDto.builder()
+                        .firstName(trainer.getUser().getFirstName())
+                        .lastName(trainer.getUser().getLastName())
+                        .username(trainer.getUser().getUsername())
+                        .specialization(trainer.getSpecialization().getName())
+                        .isActive(trainer.getUser().isActive())
+                        .trainees(entityMapper.mapToTraineeListDto(trainer.getTrainees()))
+                        .build()
+                )
+                .toList();
     }
 
     public TrainerListDto getUnassignedTrainers(String username) {
-        return new TrainerListDto(trainerRepository.findTrainersNotAssignedToTrainee(username)
-                .stream()
-                .map(t -> new TrainerListItemDto(
-                        t.getUser().getUsername(),
-                        t.getUser().getFirstName(),
-                        t.getUser().getLastName(),
-                        t.getSpecialization().getId()))
-                .collect(Collectors.toList()));
+        return entityMapper.mapToTrainerListDto(
+                trainerRepository.findTrainersNotAssignedToTrainee(username)
+        );
     }
 }
