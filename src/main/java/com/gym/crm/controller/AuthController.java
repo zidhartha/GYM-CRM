@@ -19,17 +19,13 @@ public class AuthController {
 
     @GetMapping("/login")
     @Operation(summary = "User Login")
-    public ResponseEntity<Void> login(
-            @RequestParam("username") String username,
-            @RequestParam("password") String password) {
-        userService.authenticate(username, password);
+    public ResponseEntity<Void> login() {
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/password")
     @Operation(summary = "Change Password")
     public ResponseEntity<Void> changePassword(@RequestBody @Valid ChangePasswordRequestDto request) {
-        userService.authenticate(new LoginRequestDto(request.getUsername(), request.getPassword()));
         userService.updatePassword(request.getUsername(), request.getNewPassword());
         return ResponseEntity.ok().build();
     }

@@ -38,11 +38,9 @@ public class TrainerController {
     @GetMapping("/{username}")
     @Operation(summary = "Fetching a trainer")
     public ResponseEntity<TrainerProfileDto> getTrainer(
-            @RequestHeader("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @PathVariable("username") String username
     ){
-        userService.authenticate(authUsername,authPassword);
+
 
         return ResponseEntity.status(200).body(trainerService.getTrainerByUsername(username));
     }
@@ -50,12 +48,10 @@ public class TrainerController {
     @PutMapping("/{username}")
     @Operation(summary = "Updating a trainer")
     public ResponseEntity<TrainerProfileDto> updateTrainer(
-            @RequestHeader("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @PathVariable("username") String username,
             @RequestBody @Valid TrainerUpdateDto trainerUpdateDto
             ){
-        userService.authenticate(authUsername,authPassword);
+
 
         return ResponseEntity.ok().body(trainerService.updateTrainer(trainerUpdateDto,username));
     }
@@ -63,12 +59,9 @@ public class TrainerController {
     @PatchMapping("/{username}")
     @Operation(summary = "Activate/Deactivate trainer")
     public ResponseEntity<Void> activateDeactivateTrainer(
-            @RequestHeader("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @PathVariable String username,
             @RequestBody  ActivationDto activationDto
             ){
-        userService.authenticate(authUsername,authPassword);
 
         if(!activationDto.getIsActive()) {
             userService.deactivateUser(username);
@@ -81,14 +74,10 @@ public class TrainerController {
     @GetMapping("/{username}/trainings")
     @Operation(summary = "Get trainer's trainings list")
     public ResponseEntity<List<TrainerTrainingListItemDto>> getTrainerTrainings(
-            @RequestHeader("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @PathVariable("username") String username,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
             @RequestParam(required = false) String traineeName) {
-
-        userService.authenticate(authUsername, authPassword);
 
         return ResponseEntity.ok(trainingService.getTrainerTrainings(username, from, to, traineeName));
     }

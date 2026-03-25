@@ -39,36 +39,26 @@ public class TraineeController {
     @GetMapping("/{username}")
     @Operation(summary="Get the trainee profile")
     public ResponseEntity<TraineeProfileDto> getTraineeProfile(
-            @RequestHeader ("X-Username") String authUsername,
-            @RequestHeader ("X-Password") String authPassword,
             @PathVariable String username
     ){
-        userService.authenticate(authUsername,authPassword);
-
         return ResponseEntity.ok(traineeService.getTraineeProfile(username));
     }
 
     @PutMapping("/{username}")
     @Operation(summary="Update the trainee profile")
     public ResponseEntity<TraineeProfileDto> updateTraineeProfile(
-            @RequestHeader ("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @PathVariable String username,
             @RequestBody @Valid TraineeUpdateDto traineeUpdateDto
     ){
-        userService.authenticate(authUsername,authPassword);
-        return ResponseEntity.ok(traineeService.updateTraineeProfile(traineeUpdateDto,authUsername));
+        return ResponseEntity.ok(traineeService.updateTraineeProfile(traineeUpdateDto,username));
     }
 
     @PatchMapping("/{username}")
     @Operation(summary = "Activate/Deactivate trainee")
     public ResponseEntity<Void> activateDeactivateTrainee(
-            @RequestHeader("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @PathVariable String username,
             @RequestBody  ActivationDto activationDto
             ){
-        userService.authenticate(authUsername,authPassword);
 
         if(!activationDto.getIsActive()) {
             userService.deactivateUser(username);
@@ -81,11 +71,8 @@ public class TraineeController {
     @DeleteMapping("/{username}")
     @Operation(summary = "Delete trainee profile")
     public ResponseEntity<Void> deleteTraineeProfile(
-            @RequestHeader("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @PathVariable String username
     ){
-        userService.authenticate(authUsername,authPassword);
         traineeService.deleteTrainee(username);
         return ResponseEntity.ok().build();
     }
@@ -93,15 +80,12 @@ public class TraineeController {
     @GetMapping("/{username}/trainings")
     @Operation(summary = "Get trainee's trainings list")
     public ResponseEntity<List<TraineeTrainingListItemDto>> getTraineeTrainings(
-            @RequestHeader("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @PathVariable("username") String username,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
             @RequestParam(required = false) String trainerName,
             @RequestParam(required = false) String trainingTypeName) {
 
-        userService.authenticate(authUsername, authPassword);
 
         return ResponseEntity.ok(trainingService.getTraineeTrainings(username, from, to, trainerName, trainingTypeName));
     }
@@ -109,11 +93,8 @@ public class TraineeController {
     @GetMapping("/{username}/unassigned-trainers")
     @Operation(summary = "Get non-assigned active trainers for a trainee")
     public ResponseEntity<TrainerListDto> getNotAssignedTrainers(
-            @RequestHeader("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @PathVariable String username) {
 
-        userService.authenticate(authUsername, authPassword);
 
         return ResponseEntity.ok(trainerService.getUnassignedTrainers(username));
     }
@@ -121,12 +102,9 @@ public class TraineeController {
     @PutMapping("/{username}/trainers")
     @Operation(summary="Update trainee's trainer list")
     public ResponseEntity<TrainerListDto> updateTraineeTrainers(
-            @RequestHeader("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @PathVariable("username") String username,
             @RequestBody List<String> trainerUsernames
             ){
-        userService.authenticate(authUsername, authPassword);
 
         return ResponseEntity.ok(traineeService.updateTraineeTrainers(username,trainerUsernames));
     }

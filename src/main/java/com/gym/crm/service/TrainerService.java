@@ -135,4 +135,9 @@ public class TrainerService {
                 trainerRepository.findTrainersNotAssignedToTrainee(username)
         );
     }
+
+    @Transactional(readOnly = true)
+    public long countTrainers(){
+        return trainerRepository.count();
+    }
 }

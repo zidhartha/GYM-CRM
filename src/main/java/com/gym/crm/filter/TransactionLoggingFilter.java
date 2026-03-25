@@ -1,4 +1,4 @@
-package com.gym.crm.interceptor;
+package com.gym.crm.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

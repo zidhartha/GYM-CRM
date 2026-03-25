@@ -21,12 +21,9 @@ public class TrainingController {
     @PostMapping
     @Operation(summary = "Add a new training")
     public ResponseEntity<Void> createTraining(
-            @RequestHeader("X-Username") String authUsername,
-            @RequestHeader("X-Password") String authPassword,
             @RequestBody @Valid TrainingCreateDto trainingCreateDto
             ) {
 
-        userService.authenticate(authUsername, authPassword);
         trainingService.createTraining(trainingCreateDto);
         return ResponseEntity.ok().build();
     }
