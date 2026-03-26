@@ -163,6 +163,11 @@ public class TraineeService {
     public TraineeListDto selectAllTrainees() {
         return entityMapper.mapToTraineeListDto(traineeRepository.findAll());
     }
+
+    @Transactional(readOnly = true)
+    public long countTrainees(){
+        return traineeRepository.count();
+    }
     }
 
 
