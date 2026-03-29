@@ -1,5 +1,6 @@
 package com.gym.crm.facade;
 
+import com.gym.crm.dto.authentication.LoginRequestDto;
 import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainee.TraineeCreateDto;
 import com.gym.crm.dto.trainee.TraineeProfileDto;
@@ -30,14 +31,14 @@ public class GymFacade {
     private final UserService userService;
 
 
-    public void authenticate(String username, String password) {
-        userService.authenticate(username, password);
+    public void authenticate(LoginRequestDto loginRequestDto) {
+        userService.authenticate(loginRequestDto);
     }
 
 
 
-    public void updatePassword(String username, String newPassword) {
-        userService.updatePassword(username, newPassword);
+    public void updatePassword(String username,String oldPassword, String newPassword) {
+        userService.updatePassword(username,oldPassword, newPassword);
     }
 
     public RegistrationResponseDto createTrainee(TraineeCreateDto dto) {

@@ -17,6 +17,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGeneric(Exception e) {
+        e.printStackTrace();
         return ResponseEntity.status(500)
                 .body(new ErrorResponseDto(500, "Internal server error"));
     }

@@ -6,6 +6,7 @@ import com.gym.crm.exceptions.AccessDeniedException;
 import com.gym.crm.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 @Slf4j
@@ -13,29 +14,28 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public void authenticate(LoginRequestDto credentials) {
-        log.info("Authenticating user: {}",credentials.getUsername());
-        if (!userRepository.existsByUsernameAndPassword(credentials.getUsername(), credentials.getPassword())) {
+        log.info("Authenticating user {}", credentials.getUsername());
+        User user = userRepository.findByUsername(credentials.getUsername())
+                .orElseThrow(() -> new AccessDeniedException(
+                        "Invalid credentials for user: " + credentials.getUsername()));
+        if (!passwordEncoder.matches(credentials.getPassword(), user.getPassword())) {
             throw new AccessDeniedException("Invalid credentials for user: " + credentials.getUsername());
         }
-    }
-
-    public void authenticate(String username,String password){
-            log.info("Authenticating user {}",username);
-            if(!userRepository.existsByUsernameAndPassword(username,password)){
-                throw new AccessDeniedException("Invalid credentials for user: " + username);
-            }
-    }
-
+        }
 
 
     @Transactional
-    public void updatePassword(String username, String newPassword) {
+    public void updatePassword(String username, String oldPassword, String newPassword) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
-        user.setPassword(newPassword);
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new AccessDeniedException("Old password is incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
 

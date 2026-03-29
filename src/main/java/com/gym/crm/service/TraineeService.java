@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -34,7 +35,7 @@ public class TraineeService {
     private final UsernameGenerator usernameGenerator;
     private final TrainerRepository trainerRepository;
     private final EntityMapper entityMapper;
-
+    private final PasswordEncoder passwordEncoder;
     @Transactional
     public RegistrationResponseDto createTrainee(@Valid TraineeCreateDto dto) {
         log.info("Creating trainee: {} {}, dob={}, address={}",
@@ -47,7 +48,7 @@ public class TraineeService {
                 dto.getFirstname(),
                 dto.getLastname(),
                 usernameGenerator.generateUsername(dto.getFirstname(), dto.getLastname()),
-                rawPassword
+                passwordEncoder.encode(rawPassword)
         );
 
         Trainee trainee = new Trainee(
