@@ -26,7 +26,7 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "User Login")
     public ResponseEntity<LoginResponseDto> login(
-            @RequestBody LoginRequestDto request
+            @RequestBody @Valid LoginRequestDto request
             ) {
         if(loginAttemptService.isBlocked(request.getUsername())){
             return ResponseEntity.status(429)
