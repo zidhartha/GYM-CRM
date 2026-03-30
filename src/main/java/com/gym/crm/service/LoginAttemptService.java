@@ -1,5 +1,6 @@
 package com.gym.crm.service;
 
+import com.gym.crm.model.User;
 import com.gym.crm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,25 +22,27 @@ public class LoginAttemptService {
     private int BLOCK_DURATION;
 
     @Transactional
-    public void loginFailed(String username){
-      userRepository.findByUsername(username).ifPresent(
-              user -> {
-                  int attempts = user.getFailedAttempts() + 1;
-                  user.setFailedAttempts(attempts);
+    public void loginFailed(String username) {
+        userRepository.findByUsername(username).ifPresent(
+                user -> {
+                    int attempts = user.getFailedAttempts() + 1;
+                    user.setFailedAttempts(attempts);
 
-                  if(attempts >= MAX_ATTEMPTS){
+                    if (attempts >= MAX_ATTEMPTS) {
                         LocalDateTime blockedUntil = LocalDateTime.now().plusMinutes(BLOCK_DURATION);
+                        user.setFailedAttempts(0);
                         user.setLockedUntil(blockedUntil);
                         log.warn("User : {} has been blocked until {} after {} failed attempts.",
-                                username,blockedUntil,attempts
-                                );
+                                username, blockedUntil, attempts
+                        );
                         userRepository.save(user);
-                  }
-              }
-      );
+                    }
+                }
+        );
     }
 
-    public void loginSucceeded(String username){
+    @Transactional
+    public void loginSucceeded(String username) {
         userRepository.findByUsername(username).ifPresent(
                 user -> {
                     user.setFailedAttempts(0);
@@ -48,16 +51,19 @@ public class LoginAttemptService {
                 });
     }
 
+    @Transactional
     public boolean isBlocked(String username) {
-        return userRepository.findByUsername(username).map(user ->
-        {
-            if (user.getLockedUntil() == null) return false;
-            if (LocalDateTime.now().isAfter(user.getLockedUntil())) {
-                user.setLockedUntil(null);
-                user.setFailedAttempts(0);
-                userRepository.save(user);
-                return false;
-            }
-            return true;
-        }).orElse(false);
-    }}
+        User user = userRepository.findByUsername(username).orElse(null);
+
+        if (user == null) return false;
+        if (user.getLockedUntil() == null) return false;
+
+        if (LocalDateTime.now().isAfter(user.getLockedUntil())) {
+            user.setLockedUntil(null);
+            userRepository.save(user);
+            return false;
+        }
+
+        return true;
+    }
+}
