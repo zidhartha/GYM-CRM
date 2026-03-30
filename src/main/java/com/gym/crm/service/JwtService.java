@@ -50,4 +50,8 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    public Date extractIssuedAt(String token){
+        return extractClaims(token).getIssuedAt();
+    }
 }

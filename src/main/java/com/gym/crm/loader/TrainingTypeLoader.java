@@ -1,15 +1,10 @@
-package com.gym.crm.Loader;
+package com.gym.crm.loader;
 
-import com.gym.crm.Repository.TrainingTypeRepository;
+import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.storage.StorageInitializer;
-import com.gym.crm.storage.StorageInitializer.SeedData;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor

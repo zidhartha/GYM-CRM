@@ -10,8 +10,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,33 +23,6 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Authentication controller")
 public class AuthController {
     private final UserService userService;
-    private final JwtService jwtService;
-    private final LoginAttemptService loginAttemptService;
-
-    @PostMapping("/login")
-    @Operation(summary = "User Login")
-    public ResponseEntity<LoginResponseDto> login(
-            @RequestBody @Valid LoginRequestDto request
-            ) {
-        if(loginAttemptService.isBlocked(request.getUsername())){
-            return ResponseEntity.status(429)
-                    .body(new LoginResponseDto(
-                            null,
-                            "User is blocked due to many failed attempts.Try again in 5 minutes"
-                    ));
-        }
-        try{
-            userService.authenticate(request);
-            loginAttemptService.loginSucceeded(request.getUsername());
-            String token = jwtService.generateToken(request.getUsername());
-            return ResponseEntity.ok(new LoginResponseDto(token,"Login successful"));
-        }catch(Exception e){
-            loginAttemptService.loginFailed(request.getUsername());
-            return ResponseEntity.status(401).body(
-                    new LoginResponseDto(null,"Invalid credentials")
-            );
-        }
-    }
 
     @PostMapping("/logout")
     @Operation(summary = "User logout")
@@ -58,8 +34,12 @@ public class AuthController {
 
     @PutMapping("/password")
     @Operation(summary = "Change Password")
-    public ResponseEntity<Void> changePassword(@RequestBody @Valid ChangePasswordRequestDto request) {
-        userService.updatePassword(request.getUsername(), request.getPassword(), request.getNewPassword());
+    public ResponseEntity<Void> changePassword(
+            @RequestBody @Valid ChangePasswordRequestDto request,
+            Authentication authentication) {
+
+        UserDetails username = (UserDetails) authentication.getPrincipal();
+        userService.updatePassword(username.getUsername(),request.getNewPassword());
         return ResponseEntity.ok().build();
     }
 }

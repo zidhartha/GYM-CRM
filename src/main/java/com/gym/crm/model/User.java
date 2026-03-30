@@ -2,6 +2,8 @@ package com.gym.crm.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -30,6 +32,15 @@ public class User {
     @Column(name="active",nullable=false)
     private boolean active;
 
+    @Column(name = "failed_attempts")
+    private int failedAttempts = 0;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
+
+    @Column(name = "last_logout")
+    private LocalDateTime lastLogout;
+
     public User(String firstName, String lastName, String username, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -37,4 +48,5 @@ public class User {
         this.password = password;
         this.active = true;
     }
+
 }

@@ -1,13 +1,12 @@
 package com.gym.crm.service;
 
-import com.gym.crm.Repository.TrainerRepository;
-import com.gym.crm.Repository.TrainingTypeRepository;
-import com.gym.crm.Util.EntityMapper;
+import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.repository.TrainingTypeRepository;
+import com.gym.crm.util.EntityMapper;
 import com.gym.crm.dto.authentication.RegistrationResponseDto;
-import com.gym.crm.dto.trainee.TraineeListDto;
 import com.gym.crm.dto.trainer.*;
-import com.gym.crm.Util.PasswordGenerator;
-import com.gym.crm.Util.UsernameGenerator;
+import com.gym.crm.util.PasswordGenerator;
+import com.gym.crm.util.UsernameGenerator;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Validated
 @Service

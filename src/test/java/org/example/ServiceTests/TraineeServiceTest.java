@@ -1,9 +1,9 @@
 package org.example.ServiceTests;
 
-import com.gym.crm.Repository.TraineeRepository;
-import com.gym.crm.Util.EntityMapper;
-import com.gym.crm.Util.PasswordGenerator;
-import com.gym.crm.Util.UsernameGenerator;
+import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.util.EntityMapper;
+import com.gym.crm.util.PasswordGenerator;
+import com.gym.crm.util.UsernameGenerator;
 import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainee.TraineeCreateDto;
 import com.gym.crm.dto.trainee.TraineeProfileDto;

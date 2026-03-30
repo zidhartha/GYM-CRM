@@ -37,8 +37,8 @@ public class GymFacade {
 
 
 
-    public void updatePassword(String username,String oldPassword, String newPassword) {
-        userService.updatePassword(username,oldPassword, newPassword);
+    public void updatePassword(String username,String newPassword) {
+        userService.updatePassword(username,newPassword);
     }
 
     public RegistrationResponseDto createTrainee(TraineeCreateDto dto) {

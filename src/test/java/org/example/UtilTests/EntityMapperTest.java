@@ -1,7 +1,7 @@
 package org.example.UtilTests;
 
 
-import com.gym.crm.Util.EntityMapper;
+import com.gym.crm.util.EntityMapper;
 import com.gym.crm.dto.trainee.TraineeListDto;
 import com.gym.crm.dto.trainer.TrainerListDto;
 import com.gym.crm.model.Trainee;

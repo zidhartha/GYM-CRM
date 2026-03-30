@@ -1,6 +1,6 @@
 package com.gym.crm.service;
 
-import com.gym.crm.Repository.UserRepository;
+import com.gym.crm.repository.UserRepository;
 import com.gym.crm.dto.authentication.LoginRequestDto;
 import com.gym.crm.exceptions.AccessDeniedException;
 import com.gym.crm.model.User;
@@ -9,6 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -29,12 +32,9 @@ public class UserService {
 
 
     @Transactional
-    public void updatePassword(String username, String oldPassword, String newPassword) {
+    public void updatePassword(String username, String newPassword) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new AccessDeniedException("Old password is incorrect");
-        }
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
@@ -61,8 +61,17 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Transactional
+    public void updateLastLogout(String username) {
+        userRepository.findByUsername(username).ifPresent(user -> {
+            user.setLastLogout(LocalDateTime.now());
+            userRepository.save(user);
+        });
+    }
+
     @Transactional(readOnly = true)
     public long countUsers(){
         return userRepository.count();
     }
+
 }

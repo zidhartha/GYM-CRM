@@ -1,48 +1,63 @@
 package com.gym.crm.service;
 
+import com.gym.crm.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class LoginAttemptService {
+
+    private final UserRepository userRepository;
     @Value("${auth.max-attempts}")
     private int MAX_ATTEMPTS;
     @Value("${auth.block-duration-minutes}")
     private int BLOCK_DURATION;
 
-    private final ConcurrentHashMap<String,Integer> attempts = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, LocalDateTime> blockedUntil = new ConcurrentHashMap<>();
-
+    @Transactional
     public void loginFailed(String username){
-        int currAttempt = attempts.getOrDefault(username,0) + 1;
-        attempts.put(username,currAttempt);
+      userRepository.findByUsername(username).ifPresent(
+              user -> {
+                  int attempts = user.getFailedAttempts() + 1;
+                  user.setFailedAttempts(attempts);
 
-        if(currAttempt >= MAX_ATTEMPTS){
-            LocalDateTime blockUntil = LocalDateTime.now().plusMinutes(BLOCK_DURATION);
-            blockedUntil.put(username,blockUntil);
-            log.warn("User {} blocked until {} after {} failed attempts",
-                    username,blockUntil,currAttempt);
-        }
+                  if(attempts >= MAX_ATTEMPTS){
+                        LocalDateTime blockedUntil = LocalDateTime.now().plusMinutes(BLOCK_DURATION);
+                        user.setLockedUntil(blockedUntil);
+                        log.warn("User : {} has been blocked until {} after {} failed attempts.",
+                                username,blockedUntil,attempts
+                                );
+                        userRepository.save(user);
+                  }
+              }
+      );
     }
 
     public void loginSucceeded(String username){
-        attempts.remove(username);
-        blockedUntil.remove(username);
+        userRepository.findByUsername(username).ifPresent(
+                user -> {
+                    user.setFailedAttempts(0);
+                    user.setLockedUntil(null);
+                    userRepository.save(user);
+                });
     }
 
-    public boolean isBlocked(String username){
-        LocalDateTime blockUntil = blockedUntil.get(username);
-        if(blockUntil == null) return false;
-        if(LocalDateTime.now().isAfter(blockUntil)){
-            attempts.remove(username);
-            blockedUntil.remove(username);
-            return false;
-        }
-        return true;
-    }
-
-}
+    public boolean isBlocked(String username) {
+        return userRepository.findByUsername(username).map(user ->
+        {
+            if (user.getLockedUntil() == null) return false;
+            if (LocalDateTime.now().isAfter(user.getLockedUntil())) {
+                user.setLockedUntil(null);
+                user.setFailedAttempts(0);
+                userRepository.save(user);
+                return false;
+            }
+            return true;
+        }).orElse(false);
+    }}

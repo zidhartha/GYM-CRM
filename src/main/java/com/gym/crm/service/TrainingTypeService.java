@@ -1,6 +1,6 @@
 package com.gym.crm.service;
 
-import com.gym.crm.Repository.TrainingTypeRepository;
+import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.dto.trainingType.TrainingTypeListDto;
 import com.gym.crm.dto.trainingType.TrainingTypeProfileDto;
 import lombok.RequiredArgsConstructor;

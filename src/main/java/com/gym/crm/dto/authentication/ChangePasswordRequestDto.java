@@ -10,8 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChangePasswordRequestDto {
-    @NotBlank(message="Username can not be blank")
-    private String username;
 
     @NotBlank(message="Password can not be blank")
     private String password;

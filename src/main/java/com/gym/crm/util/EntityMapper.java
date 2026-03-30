@@ -1,4 +1,4 @@
-package com.gym.crm.Util;
+package com.gym.crm.util;
 
 import com.gym.crm.dto.trainee.TraineeListDto;
 import com.gym.crm.dto.trainee.TraineeListItemDto;
@@ -9,7 +9,6 @@ import com.gym.crm.model.Trainer;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.List;
 
 @Component
 public class EntityMapper {

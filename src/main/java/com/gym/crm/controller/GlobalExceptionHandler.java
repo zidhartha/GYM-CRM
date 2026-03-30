@@ -2,12 +2,14 @@ package com.gym.crm.controller;
 
 import com.gym.crm.dto.error.ErrorResponseDto;
 import com.gym.crm.exceptions.AccessDeniedException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
@@ -17,7 +19,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGeneric(Exception e) {
-        e.printStackTrace();
+        log.debug("Unexpected error",e);
         return ResponseEntity.status(500)
                 .body(new ErrorResponseDto(500, "Internal server error"));
     }
