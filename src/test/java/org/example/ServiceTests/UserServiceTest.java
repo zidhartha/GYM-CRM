@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -19,7 +20,7 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
 
     @Mock private UserRepository userRepository;
-
+    @Mock private PasswordEncoder passwordEncoder;
     @InjectMocks private UserService userService;
 
     private User user;
@@ -31,10 +32,10 @@ class UserServiceTest {
         user.setActive(true);
     }
 
-
     @Test
     void authenticate_shouldPassWithCorrectCredentials() {
-        when(userRepository.existsByUsernameAndPassword("John.Doe", "rawPass")).thenReturn(true);
+        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("rawPass", "rawPass")).thenReturn(true);
 
         assertThatNoException()
                 .isThrownBy(() -> userService.authenticate(new LoginRequestDto("John.Doe", "rawPass")));
@@ -42,21 +43,22 @@ class UserServiceTest {
 
     @Test
     void authenticate_shouldThrowWhenCredentialsInvalid() {
-        when(userRepository.existsByUsernameAndPassword("John.Doe", "wrongPass")).thenReturn(false);
+        when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrongPass", "rawPass")).thenReturn(false);
 
         assertThatThrownBy(() -> userService.authenticate(new LoginRequestDto("John.Doe", "wrongPass")))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("John.Doe");
     }
 
-
     @Test
     void updatePassword_shouldSetNewPassword() {
         when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("newPass")).thenReturn("encodedNewPass");
 
         userService.updatePassword("John.Doe", "newPass");
 
-        assertThat(user.getPassword()).isEqualTo("newPass");
+        assertThat(user.getPassword()).isEqualTo("encodedNewPass");
         verify(userRepository).save(user);
     }
 
@@ -66,11 +68,10 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> userService.updatePassword("ghost", "newPass"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("ghost");
+                .hasMessageContaining("User not found");
 
         verify(userRepository, never()).save(any());
     }
-
 
     @Test
     void updateActiveStatus_shouldToggleFromTrueToFalse() {

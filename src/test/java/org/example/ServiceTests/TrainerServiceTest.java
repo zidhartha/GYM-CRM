@@ -20,11 +20,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -37,6 +36,7 @@ class TrainerServiceTest {
     @Mock private PasswordGenerator passwordGenerator;
     @Mock private UsernameGenerator usernameGenerator;
     @Mock private EntityMapper entityMapper;
+    @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks private TrainerService trainerService;
 
@@ -45,12 +45,13 @@ class TrainerServiceTest {
         TrainerCreateDto dto = new TrainerCreateDto("Jane", "Smith", "Yoga");
         when(passwordGenerator.generatePassword()).thenReturn("pass456");
         when(usernameGenerator.generateUsername("Jane", "Smith")).thenReturn("Jane.Smith");
+        when(passwordEncoder.encode("pass456")).thenReturn("encodedPass456");
 
         TrainingType type = new TrainingType();
         type.setName("Yoga");
         when(trainingTypeRepository.findByName("Yoga")).thenReturn(Optional.of(type));
 
-        User user = new User("Jane", "Smith", "Jane.Smith", "pass456");
+        User user = new User("Jane", "Smith", "Jane.Smith", "encodedPass456");
         Trainer saved = new Trainer(user, type);
         when(trainerRepository.save(any())).thenReturn(saved);
 
@@ -63,6 +64,8 @@ class TrainerServiceTest {
     @Test
     void createTrainer_shouldThrowWhenTrainingTypeInvalid() {
         TrainerCreateDto dto = new TrainerCreateDto("Jane", "Smith", "InvalidType");
+        when(passwordGenerator.generatePassword()).thenReturn("pass456");
+        when(usernameGenerator.generateUsername("Jane", "Smith")).thenReturn("Jane.Smith");
         when(trainingTypeRepository.findByName("InvalidType")).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class,

@@ -1,5 +1,6 @@
 package org.example.FacadeTest;
 
+import com.gym.crm.dto.authentication.LoginRequestDto;
 import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainee.TraineeCreateDto;
 import com.gym.crm.dto.trainee.TraineeProfileDto;
@@ -37,8 +38,9 @@ class GymFacadeTest {
 
     @Test
     void authenticate_shouldDelegateToUserService() {
-        gymFacade.authenticate("gio.janelidze", "password");
-        verify(userService).authenticate("gio.janelidze", "password");
+        LoginRequestDto loginRequestDto = new LoginRequestDto("gio.janelidze","password");
+        gymFacade.authenticate(loginRequestDto);
+        verify(userService).authenticate(loginRequestDto);
     }
 
     @Test
