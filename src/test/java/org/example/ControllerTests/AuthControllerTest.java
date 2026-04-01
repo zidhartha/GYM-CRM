@@ -24,7 +24,7 @@ class AuthControllerTest {
 
     @Test
     void changePassword_shouldReturn200() {
-        ChangePasswordRequestDto dto = new ChangePasswordRequestDto("oldpass", "newpass");
+        ChangePasswordRequestDto dto = new ChangePasswordRequestDto( "newpass");
         Authentication authentication = mock(Authentication.class);
         UserDetails userDetails = mock(UserDetails.class);
         when(userDetails.getUsername()).thenReturn("dato.jincharadze");

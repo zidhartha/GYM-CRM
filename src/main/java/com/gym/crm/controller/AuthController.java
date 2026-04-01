@@ -24,8 +24,8 @@ public class AuthController {
             @RequestBody @Valid ChangePasswordRequestDto request,
             Authentication authentication) {
 
-        UserDetails username = (UserDetails) authentication.getPrincipal();
-        userService.updatePassword(username.getUsername(),request.getNewPassword());
+        UserDetails details = (UserDetails) authentication.getPrincipal();
+        userService.updatePassword(details.getUsername(),request.getNewPassword());
         return ResponseEntity.ok().build();
     }
 }
