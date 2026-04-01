@@ -2,8 +2,8 @@ package com.gym.crm.storage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.gym.crm.Loader.*;
-import com.gym.crm.Repository.*;
+import com.gym.crm.loader.*;
+import com.gym.crm.repository.*;
 import com.gym.crm.dto.trainee.TraineeCreateDto;
 import com.gym.crm.dto.trainer.TrainerCreateDto;
 import com.gym.crm.dto.training.TrainingCreateDto;

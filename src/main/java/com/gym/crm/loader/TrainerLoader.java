@@ -1,4 +1,4 @@
-package com.gym.crm.Loader;
+package com.gym.crm.loader;
 
 import com.gym.crm.dto.trainer.TrainerCreateDto;
 import com.gym.crm.service.TrainerService;

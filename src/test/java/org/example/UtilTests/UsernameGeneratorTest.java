@@ -1,8 +1,8 @@
 package org.example.UtilTests;
 
-import com.gym.crm.Repository.TraineeRepository;
-import com.gym.crm.Repository.TrainerRepository;
-import com.gym.crm.Util.UsernameGenerator;
+import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.util.UsernameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

@@ -1,9 +1,9 @@
 package org.example.ServiceTests;
 
-import com.gym.crm.Repository.TraineeRepository;
-import com.gym.crm.Util.EntityMapper;
-import com.gym.crm.Util.PasswordGenerator;
-import com.gym.crm.Util.UsernameGenerator;
+import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.util.EntityMapper;
+import com.gym.crm.util.PasswordGenerator;
+import com.gym.crm.util.UsernameGenerator;
 import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainee.TraineeCreateDto;
 import com.gym.crm.dto.trainee.TraineeProfileDto;
@@ -17,10 +17,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -32,6 +32,7 @@ class TraineeServiceTest {
     @Mock private PasswordGenerator passwordGenerator;
     @Mock private UsernameGenerator usernameGenerator;
     @Mock private EntityMapper entityMapper;
+    @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks private TraineeService traineeService;
 
@@ -40,8 +41,9 @@ class TraineeServiceTest {
         TraineeCreateDto dto = new TraineeCreateDto("Gio", "Janelidze", null, null);
         when(passwordGenerator.generatePassword()).thenReturn("pass123");
         when(usernameGenerator.generateUsername("Gio", "Janelidze")).thenReturn("gio.janelidze");
+        when(passwordEncoder.encode("pass123")).thenReturn("encodedPass123");
 
-        User user = new User("Gio", "Janelidze", "gio.janelidze", "pass123");
+        User user = new User("Gio", "Janelidze", "gio.janelidze", "encodedPass123");
         Trainee saved = new Trainee(user, null, null);
         when(traineeRepository.save(any())).thenReturn(saved);
 

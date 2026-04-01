@@ -2,9 +2,7 @@ package org.example.ControllerTests;
 
 import com.gym.crm.controller.TrainingController;
 import com.gym.crm.dto.training.TrainingCreateDto;
-import com.gym.crm.exceptions.AccessDeniedException;
 import com.gym.crm.service.TrainingService;
-import com.gym.crm.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,12 +14,10 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class TrainingControllerTest {
 
     @Mock TrainingService trainingService;
-    @Mock UserService userService;
     @InjectMocks TrainingController trainingController;
 
     @Test
@@ -35,28 +31,10 @@ class TrainingControllerTest {
                 .trainingDuration(60L)
                 .build();
 
-        ResponseEntity<Void> response = trainingController.createTraining("dato.jincharadze", "pass", dto);
+        ResponseEntity<Void> response = trainingController.createTraining(dto);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(trainingService).createTraining(dto);
-    }
-
-    @Test
-    void createTraining_shouldThrowWhenAuthFails() {
-        TrainingCreateDto dto = TrainingCreateDto.builder()
-                .traineeUsername("dato.jincharadze")
-                .trainerUsername("gio.janelidze")
-                .trainingName("Morning Yoga")
-                .trainingTypeName("Yoga")
-                .trainingDate(LocalDate.now())
-                .trainingDuration(60L)
-                .build();
-
-        doThrow(new AccessDeniedException("Invalid credentials"))
-                .when(userService).authenticate("dato.jincharadze", "wrongpass");
-
-        assertThrows(AccessDeniedException.class,
-                () -> trainingController.createTraining("dato.jincharadze", "wrongpass", dto));
     }
 
     @Test
@@ -74,6 +52,6 @@ class TrainingControllerTest {
                 .when(trainingService).createTraining(dto);
 
         assertThrows(IllegalArgumentException.class,
-                () -> trainingController.createTraining("dato.jincharadze", "pass", dto));
+                () -> trainingController.createTraining(dto));
     }
 }

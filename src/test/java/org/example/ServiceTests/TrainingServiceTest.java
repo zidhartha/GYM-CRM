@@ -1,9 +1,9 @@
 package org.example.ServiceTests;
 
-import com.gym.crm.Repository.TraineeRepository;
-import com.gym.crm.Repository.TrainerRepository;
-import com.gym.crm.Repository.TrainingRepository;
-import com.gym.crm.Repository.TrainingTypeRepository;
+import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.repository.TrainingRepository;
+import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.dto.training.TrainingCreateDto;
 import com.gym.crm.model.*;
 import com.gym.crm.service.TrainingService;

@@ -1,4 +1,4 @@
-package com.gym.crm.Util;
+package com.gym.crm.util;
 
 
 import org.slf4j.Logger;
@@ -9,9 +9,8 @@ import org.springframework.stereotype.Component;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.gym.crm.Repository.TraineeRepository;
-import com.gym.crm.Repository.TrainerRepository;
-import org.springframework.transaction.annotation.Propagation;
+import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.repository.TrainerRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 

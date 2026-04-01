@@ -15,6 +15,15 @@ seed:
   file:
     path: classpath:seed-data.json
 
+security:
+  jwt:
+    secret: MY_SUPER_SECRET_KEY_WHICH_IS_DEFINITELY_MORE_THAN_32_CHARACTERS_LONG
+    expiration: 86400000
+
+auth:
+  max-attempts: 3
+  block-duration-minutes: 5
+
 management:
   endpoints:
     web:
@@ -23,3 +32,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+cors:
+  allowed-origins: http://localhost:3000,http://localhost:8080
+  allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS

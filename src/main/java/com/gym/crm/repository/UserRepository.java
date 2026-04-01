@@ -1,4 +1,4 @@
-package com.gym.crm.Repository;
+package com.gym.crm.repository;
 
 import com.gym.crm.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;

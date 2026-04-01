@@ -1,10 +1,10 @@
 package com.gym.crm.service;
 
-import com.gym.crm.Repository.TraineeRepository;
-import com.gym.crm.Repository.TrainerRepository;
-import com.gym.crm.Util.EntityMapper;
-import com.gym.crm.Util.PasswordGenerator;
-import com.gym.crm.Util.UsernameGenerator;
+import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.util.EntityMapper;
+import com.gym.crm.util.PasswordGenerator;
+import com.gym.crm.util.UsernameGenerator;
 import com.gym.crm.dto.authentication.RegistrationResponseDto;
 import com.gym.crm.dto.trainee.TraineeCreateDto;
 import com.gym.crm.dto.trainee.TraineeListDto;
@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -34,7 +35,7 @@ public class TraineeService {
     private final UsernameGenerator usernameGenerator;
     private final TrainerRepository trainerRepository;
     private final EntityMapper entityMapper;
-
+    private final PasswordEncoder passwordEncoder;
     @Transactional
     public RegistrationResponseDto createTrainee(@Valid TraineeCreateDto dto) {
         log.info("Creating trainee: {} {}, dob={}, address={}",
@@ -47,7 +48,7 @@ public class TraineeService {
                 dto.getFirstname(),
                 dto.getLastname(),
                 usernameGenerator.generateUsername(dto.getFirstname(), dto.getLastname()),
-                rawPassword
+                passwordEncoder.encode(rawPassword)
         );
 
         Trainee trainee = new Trainee(

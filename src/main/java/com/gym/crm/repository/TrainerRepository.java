@@ -1,6 +1,5 @@
-package com.gym.crm.Repository;
+package com.gym.crm.repository;
 
-import com.gym.crm.dto.trainee.TraineeListItemDto;
 import com.gym.crm.model.Trainer;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;

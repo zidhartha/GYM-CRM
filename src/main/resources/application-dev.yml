@@ -4,3 +4,7 @@ spring:
     username: postgres
     password: devpassword
     driver-class-name: org.postgresql.Driver
+
+cors:
+  allowed-origins: http://dev-server:3000
+  allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
