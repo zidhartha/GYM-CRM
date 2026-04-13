@@ -1,0 +1,21 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: workload-service
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+security:
+  jwt:
+    secret: MY_SUPER_SECRET_KEY_WHICH_IS_DEFINITELY_MORE_THAN_32_CHARACTERS_LONG
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] [txId=%X{transactionId}] %-5level %logger{36} - %msg%n"
