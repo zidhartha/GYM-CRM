@@ -21,40 +21,24 @@ public class WorkloadController {
 
     @Operation(summary = "Update trainer workload")
     @PostMapping
-    public ResponseEntity<Void> updateWorkload(
-            @RequestBody WorkloadRequest request,
-            @RequestHeader(value = "X-Transaction-Id",required = false) String transactionId
-            ){
-        MDC.put("transactionId", transactionId != null ? transactionId : "none");
-        log.info("[TRANSACTION] Received workload update for trainer: {}, action: {}",
+    public ResponseEntity<Void> updateWorkload(@RequestBody WorkloadRequest request) {
+        log.info("Received workload update for trainer: {}, action: {}",
                 request.getTrainerUsername(), request.getActionType());
-
         workloadService.updateWorkload(request);
-
-        log.info("[TRANSACTION] Workload update completed for trainer: {}", request.getTrainerUsername());
-        MDC.clear();
+        log.info("Workload update completed for trainer: {}", request.getTrainerUsername());
         return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Get trainer workload summary")
     @GetMapping("/{username}")
-    public ResponseEntity<TrainerWorkload> getWorkload(
-            @PathVariable String username,
-            @RequestHeader(value = "X-Transaction-Id",required = false) String transactionId
-    ){
-        MDC.put("transactionId", transactionId != null ? transactionId : "none");
-        log.info("[TRANSACTION] Fetching workload summary for trainer: {}", username);
-
+    public ResponseEntity<TrainerWorkload> getWorkload(@PathVariable String username) {
+        log.info("Fetching workload summary for trainer: {}", username);
         TrainerWorkload workload = workloadService.getWorkload(username);
-
         if (workload == null) {
-            log.warn("[TRANSACTION] No workload data found for trainer: {}", username);
-            MDC.clear();
+            log.warn("No workload data found for trainer: {}", username);
             return ResponseEntity.notFound().build();
         }
-
-        log.info("[TRANSACTION] Returning workload summary for trainer: {}", username);
-        MDC.clear();
+        log.info("Returning workload summary for trainer: {}", username);
         return ResponseEntity.ok(workload);
     }
 }

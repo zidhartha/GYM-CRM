@@ -55,12 +55,4 @@ public class JwtService {
         return extractClaims(token).getIssuedAt();
     }
 
-    public String generateTokenForService() {
-        return Jwts.builder()
-                .setSubject("gym-crm-main")
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 60_000)) // 1 minute
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
 }

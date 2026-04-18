@@ -12,6 +12,18 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+  security:
+    oauth2:
+      client:
+        registration:
+          gym-main:
+            client-id: gym-main
+            client-secret: ${GYM_MAIN_CLIENT_SECRET:gym-fallback-secret}
+            authorization-grant-type: client_credentials
+            scope: report:write, report:read
+        provider:
+          gym-main:
+            token-uri: http://localhost:8083/oauth2/token
 
 seed:
   file:
@@ -59,3 +71,5 @@ resilience4j:
       workload:
         max-attempts: 3
         wait-duration: 1s
+workload:
+  url: http://workload-service/api/workload

@@ -1,11 +1,11 @@
-package com.gym.crm;
+package com.gym.auth;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class WorkloadApplication {
+public class AuthServiceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(WorkloadApplication.class, args);
+        SpringApplication.run(AuthServiceApplication.class, args);
     }
 }

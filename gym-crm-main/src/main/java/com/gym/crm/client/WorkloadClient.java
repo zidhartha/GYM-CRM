@@ -1,11 +1,12 @@
 package com.gym.crm.client;
 
 import com.gym.crm.dto.trainer.TrainerWorkloadRequestDto;
-import com.gym.crm.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import java.time.Duration;
 import java.util.UUID;
 
@@ -13,20 +14,20 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class WorkloadClient {
-    private final WebClient.Builder webClientBuilder;
-    private final JwtService jwtService;
 
-    private static final String WORKLOAD_URL = "http://workload-service/api/workload";
+    private final WebClient.Builder webClientBuilder;
+
+    @Value(("${workload.url}"))
+    private String workloadUrl;
 
     public void sendWorkload(TrainerWorkloadRequestDto request, String transactionId) {
-        String token = jwtService.generateTokenForService();
         String txId = transactionId != null ? transactionId : UUID.randomUUID().toString();
 
         webClientBuilder.build()
                 .post()
-                .uri(WORKLOAD_URL)
-                .header("Authorization", "Bearer " + token)
+                .uri(workloadUrl)
                 .header("X-Transaction-Id", txId)
+                // No .header("Authorization", ...) needed — the OAuth2 filter handles it
                 .bodyValue(request)
                 .retrieve()
                 .toBodilessEntity()

@@ -4,6 +4,14 @@ server:
 spring:
   application:
     name: workload-service
+  security:
+      oauth2:
+        resourceserver:
+          jwt:
+            # Workload fetches RSA public key from here once and caches it
+            jwk-set-uri: http://localhost:8083/oauth2/jwks
+            # Must exactly match app.auth.issuer-uri in auth service
+            issuer-uri: http://localhost:8083
 
 eureka:
   client:
@@ -12,10 +20,6 @@ eureka:
   instance:
     prefer-ip-address: true
 
-security:
-  jwt:
-    secret: MY_SUPER_SECRET_KEY_WHICH_IS_DEFINITELY_MORE_THAN_32_CHARACTERS_LONG
-
 logging:
   pattern:
-    console: "%d{HH:mm:ss} [%thread] [txId=%X{transactionId}] %-5level %logger{36} - %msg%n"
+    level: "%5p [txId=%X{txId}]"

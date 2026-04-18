@@ -20,6 +20,7 @@
         <module>gym-crm-eureka</module>
         <module>gym-crm-workload</module>
         <module>gym-crm-main</module>
+        <module>gym-crm-auth</module>
     </modules>
 
     <properties>
