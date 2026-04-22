@@ -1,0 +1,26 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: auth-service
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+app:
+  auth:
+    # Must match the issuer-uri configured in workload's resource server
+    issuer-uri: http://localhost:8083
+  security:
+    gym-main-client-secret: ${GYM_MAIN_CLIENT_SECRET:gym-fallback-secret}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

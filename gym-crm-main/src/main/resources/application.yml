@@ -1,0 +1,75 @@
+spring:
+  application:
+    name: gym-crm-main
+  profiles:
+    active: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  security:
+    oauth2:
+      client:
+        registration:
+          gym-main:
+            client-id: gym-main
+            client-secret: ${GYM_MAIN_CLIENT_SECRET:gym-fallback-secret}
+            authorization-grant-type: client_credentials
+            scope: report:write, report:read
+        provider:
+          gym-main:
+            token-uri: http://localhost:8083/oauth2/token
+
+seed:
+  file:
+    path: classpath:seed-data.json
+
+security:
+  jwt:
+    secret: MY_SUPER_SECRET_KEY_WHICH_IS_DEFINITELY_MORE_THAN_32_CHARACTERS_LONG
+    expiration: 86400000
+
+auth:
+  max-attempts: 3
+  block-duration-minutes: 5
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus,info
+  endpoint:
+    health:
+      show-details: always
+
+cors:
+  allowed-origins: http://localhost:3000,http://localhost:8080
+  allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      workload:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+  retry:
+    instances:
+      workload:
+        max-attempts: 3
+        wait-duration: 1s
+workload:
+  url: http://workload-service/api/workload
