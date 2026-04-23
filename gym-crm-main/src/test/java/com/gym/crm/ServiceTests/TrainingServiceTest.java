@@ -1,5 +1,6 @@
 package com.gym.crm.ServiceTests;
 
+import com.gym.crm.messaging.TrainingWorkloadPublisher;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.repository.TrainingRepository;
@@ -7,7 +8,7 @@ import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.dto.training.TrainingCreateDto;
 import com.gym.crm.model.*;
 import com.gym.crm.service.TrainingService;
-import com.gym.crm.service.WorkloadService;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +30,7 @@ class TrainingServiceTest {
     @Mock private TrainerRepository trainerRepository;
     @Mock private TrainingTypeRepository trainingTypeRepository;
     @Mock private TrainingRepository trainingRepository;
-    @Mock private WorkloadService workloadService;
+    @Mock private TrainingWorkloadPublisher trainingWorkloadPublisher;
     @InjectMocks private TrainingService trainingService;
 
     private Trainee mockTrainee() {
@@ -73,7 +74,7 @@ class TrainingServiceTest {
         when(trainingRepository.save(any(Training.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        doNothing().when(workloadService)
+        doNothing().when(trainingWorkloadPublisher)
                 .notifyWorkload(any(), any(), any());
 
         Training result = trainingService.createTraining(dto);

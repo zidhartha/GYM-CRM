@@ -24,6 +24,14 @@ spring:
         provider:
           gym-main:
             token-uri: http://localhost:8083/oauth2/token
+  activemq:
+    broker-url: tcp://localhost:61616?jms.redeliveryPolicy.maximumRedeliveries=6&jms.redeliveryPolicy.redeliveryDelay=1000
+    user: admin
+    password: admin
+
+activemq:
+  queue:
+    workload: gym.workload.queue
 
 seed:
   file:
@@ -57,19 +65,3 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      workload:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 10s
-        permitted-number-of-calls-in-half-open-state: 3
-  retry:
-    instances:
-      workload:
-        max-attempts: 3
-        wait-duration: 1s
-workload:
-  url: http://workload-service/api/workload
