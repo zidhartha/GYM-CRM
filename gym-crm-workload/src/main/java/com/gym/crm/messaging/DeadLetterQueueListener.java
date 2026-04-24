@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class DeadLetterQueueListener {
 
-    @JmsListener(destination = "ActiveMQ.DLQ", containerFactory = "jmsListenerContainerFactory")
+    @JmsListener(destination = "${activemq.queue.dlq}", containerFactory = "jmsListenerContainerFactory")
     public void onDeadLetter(Message message) {
         try {
             String txId = message.getStringProperty("transactionId");

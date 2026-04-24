@@ -24,10 +24,7 @@ public class WorkloadListener {
 
     private final WorkloadService workloadService;
     private final Validator validator;
-    private final JmsTemplate jmsTemplate;
 
-    @Value("${activemq.queue.dlq:ActiveMQ.DLQ}")
-    private String dlqName;
 
     @JmsListener(destination = "${activemq.queue.workload}", containerFactory = "jmsListenerContainerFactory")
     public void onMessage(WorkloadRequest request, Message rawMessage) throws Exception {
