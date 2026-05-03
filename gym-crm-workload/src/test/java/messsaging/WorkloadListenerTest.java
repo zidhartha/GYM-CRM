@@ -1,7 +1,7 @@
 package messsaging;
 import com.gym.crm.messaging.WorkloadListener;
-import com.gym.crm.model.ActionType;
-import com.gym.crm.model.WorkloadRequest;
+import com.gym.crm.dto.ActionType;
+import com.gym.crm.dto.WorkloadRequest;
 import com.gym.crm.service.WorkloadService;
 import jakarta.jms.Message;
 import jakarta.validation.ConstraintViolation;

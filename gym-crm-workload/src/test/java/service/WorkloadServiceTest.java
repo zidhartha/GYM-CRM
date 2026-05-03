@@ -1,8 +1,8 @@
 package service;
 
-import com.gym.crm.model.ActionType;
+import com.gym.crm.dto.ActionType;
 import com.gym.crm.model.TrainerWorkload;
-import com.gym.crm.model.WorkloadRequest;
+import com.gym.crm.dto.WorkloadRequest;
 import com.gym.crm.service.WorkloadService;
 import com.gym.crm.storage.WorkloadStorage;
 import org.junit.jupiter.api.BeforeEach;
