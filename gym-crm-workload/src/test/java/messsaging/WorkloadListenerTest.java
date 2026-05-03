@@ -50,7 +50,7 @@ class WorkloadListenerTest {
         validRequest.setTrainerLastName("Cire");
         validRequest.setActive(true);
         validRequest.setTrainingDate(LocalDate.of(2025, 4, 1));
-        validRequest.setTrainingDuration(2.0);
+        validRequest.setTrainingDuration(2);
         validRequest.setActionType(ActionType.ADD);
 
         when(rawMessage.getStringProperty("transactionId")).thenReturn("test-tx-id");
