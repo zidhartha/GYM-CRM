@@ -11,7 +11,6 @@ import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import com.gym.crm.model.TrainerWorkload.MonthSummary;
 import com.gym.crm.model.TrainerWorkload.YearlySummary;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 
@@ -27,16 +26,33 @@ public class WorkloadService {
         log.info("[txId={}] processWorkload START action={} trainer={}",
                 txId, request.getActionType(), request.getTrainerUsername());
 
+        int year  = request.getTrainingDate().getYear();
+        int month = request.getTrainingDate().getMonthValue();
+
+        //if deleting an non existant object, it must not create a redundant entry in my database.
+        if (request.getActionType() == ActionType.DELETE) {
+            repository.findByUsername(request.getTrainerUsername())
+                    .ifPresent(workload -> {
+                        workload.getYearlySummary().stream()
+                                .filter(y -> y.getYear() == year)
+                                .findFirst()
+                                .flatMap(y -> y.getMonths().stream()
+                                        .filter(m -> m.getMonth() == month)
+                                        .findFirst())
+                                .ifPresent(m -> {
+                                    updateDuration(m, request, txId, year, month);
+                                    repository.save(workload);
+                                });
+                    });
+            return;
+        }
         TrainerWorkload workload = repository.findByUsername(request.getTrainerUsername())
                 .orElseGet(() -> createNewWorkload(request, txId));
 
         updateTrainerInfo(workload, request);
 
-        int year  = request.getTrainingDate().getYear();
-        int month = request.getTrainingDate().getMonthValue();
-
-        YearlySummary  yearlySummary = findOrCreateYear(workload, year, txId);
-        MonthSummary   monthSummary  = findOrCreateMonth(yearlySummary, month, txId);
+        YearlySummary yearlySummary = findOrCreateYear(workload, year, txId);
+        MonthSummary  monthSummary  = findOrCreateMonth(yearlySummary, month, txId);
 
         updateDuration(monthSummary, request, txId, year, month);
 
