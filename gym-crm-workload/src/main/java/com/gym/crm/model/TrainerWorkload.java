@@ -25,10 +25,8 @@
         @Indexed(unique = true)
         private String username;
 
-        @Indexed
         private String firstName;
 
-        @Indexed
         private String lastName;
         private boolean active;
         private List<YearlySummary> yearlySummary;
