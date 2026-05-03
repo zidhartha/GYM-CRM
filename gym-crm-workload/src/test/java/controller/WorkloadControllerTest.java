@@ -61,7 +61,7 @@ class WorkloadControllerTest {
     void shouldReturn200OnValidUpdateRequest() throws Exception {
         doNothing().when(workloadService).updateWorkload(any());
 
-        mockMvc.perform(post("/api/workload/update")
+        mockMvc.perform(post("/api/workload")  // was /api/workload/update
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Transaction-Id", "test-123")
                         .content(objectMapper.writeValueAsString(buildRequest())))
@@ -74,7 +74,7 @@ class WorkloadControllerTest {
     void shouldReturn200EvenWithoutTransactionIdHeader() throws Exception {
         doNothing().when(workloadService).updateWorkload(any());
 
-        mockMvc.perform(post("/api/workload/update")
+        mockMvc.perform(post("/api/workload")  // was /api/workload/update
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buildRequest())))
                 .andExpect(status().isOk());

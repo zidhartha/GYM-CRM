@@ -1,7 +1,6 @@
 package com.gym.crm.ServiceTests;
 
 import com.gym.crm.repository.TraineeRepository;
-import com.gym.crm.service.WorkloadService;
 import com.gym.crm.util.EntityMapper;
 import com.gym.crm.util.PasswordGenerator;
 import com.gym.crm.util.UsernameGenerator;
@@ -34,7 +33,6 @@ class TraineeServiceTest {
     @Mock private UsernameGenerator usernameGenerator;
     @Mock private EntityMapper entityMapper;
     @Mock private PasswordEncoder passwordEncoder;
-    @Mock private WorkloadService workloadService;
 
     @InjectMocks private TraineeService traineeService;
 

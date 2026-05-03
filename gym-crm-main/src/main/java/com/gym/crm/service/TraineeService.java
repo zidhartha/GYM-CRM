@@ -1,5 +1,6 @@
 package com.gym.crm.service;
 
+import com.gym.crm.messaging.TrainingWorkloadPublisher;
 import com.gym.crm.model.ActionType;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
@@ -39,7 +40,7 @@ public class TraineeService {
     private final TrainerRepository trainerRepository;
     private final EntityMapper entityMapper;
     private final PasswordEncoder passwordEncoder;
-    private final WorkloadService workloadService;
+    private final TrainingWorkloadPublisher trainingWorkloadPublisher;
     @Transactional
     public RegistrationResponseDto createTrainee(@Valid TraineeCreateDto dto) {
         log.info("Creating trainee: {} {}, dob={}, address={}",
@@ -164,7 +165,7 @@ public class TraineeService {
                 () -> new UsernameNotFoundException("Trainee with this username does not exist.")
         );
         trainee.getTrainings().forEach(training ->
-                workloadService.notifyWorkload(training, ActionType.DELETE, MDC.get("transactionId")));
+                trainingWorkloadPublisher.notifyWorkload(training, ActionType.DELETE, MDC.get("transactionId")));
         traineeRepository.deleteByUserUsername(username);
         log.info("Trainee deleted: {}", username);
     }

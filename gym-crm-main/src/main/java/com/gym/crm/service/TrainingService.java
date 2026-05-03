@@ -1,7 +1,6 @@
 package com.gym.crm.service;
 
-import com.gym.crm.client.WorkloadClient;
-import com.gym.crm.dto.trainer.TrainerWorkloadRequestDto;
+import com.gym.crm.messaging.TrainingWorkloadPublisher;
 import com.gym.crm.model.*;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TrainingService {
     private static final Logger log = LoggerFactory.getLogger(TrainingService.class);
-    private final WorkloadService workloadService;
+    private final TrainingWorkloadPublisher trainingEventPublisher;
     private final TrainingRepository trainingRepository;
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
@@ -70,8 +69,7 @@ public class TrainingService {
                 trainingType.getName(),
                 saved.getTrainingName());
 
-        String transactionId = MDC.get("transactionId");
-        workloadService.notifyWorkload(saved, ActionType.ADD, MDC.get("transactionId"));
+        trainingEventPublisher.notifyWorkload(saved, ActionType.ADD, MDC.get("transactionId"));
 
         return saved;
     }
@@ -87,7 +85,7 @@ public class TrainingService {
         log.info("Training deleted: id={}, trainer={}",
                 trainingId, training.getTrainer().getUser().getUsername());
 
-        workloadService.notifyWorkload(training, ActionType.DELETE, MDC.get("transactionId"));
+        trainingEventPublisher.notifyWorkload(training, ActionType.DELETE, MDC.get("transactionId"));
     }
 
 
