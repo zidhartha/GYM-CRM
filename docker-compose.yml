@@ -1,0 +1,31 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: gym-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  activemq:
+    image: apache/activemq-classic
+    container_name: gym-activemq
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+
+  postgres:
+    image: postgres:16
+    container_name: gym-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: gym_crm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: wildwest123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  mongo_data:
+  postgres_data:

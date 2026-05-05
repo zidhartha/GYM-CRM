@@ -1,7 +1,7 @@
 package messsaging;
 import com.gym.crm.messaging.WorkloadListener;
-import com.gym.crm.model.ActionType;
-import com.gym.crm.model.WorkloadRequest;
+import com.gym.crm.dto.ActionType;
+import com.gym.crm.dto.WorkloadRequest;
 import com.gym.crm.service.WorkloadService;
 import jakarta.jms.Message;
 import jakarta.validation.ConstraintViolation;
@@ -50,7 +50,7 @@ class WorkloadListenerTest {
         validRequest.setTrainerLastName("Cire");
         validRequest.setActive(true);
         validRequest.setTrainingDate(LocalDate.of(2025, 4, 1));
-        validRequest.setTrainingDuration(2.0);
+        validRequest.setTrainingDuration(2);
         validRequest.setActionType(ActionType.ADD);
 
         when(rawMessage.getStringProperty("transactionId")).thenReturn("test-tx-id");

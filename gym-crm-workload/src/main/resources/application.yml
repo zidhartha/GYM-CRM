@@ -10,6 +10,10 @@ spring:
         jwt:
           jwk-set-uri: http://auth-service/oauth2/jwks
           issuer-uri: http://localhost:8083
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/gym-workload
+      auto-index-creation: true
   activemq:
     broker-url: tcp://localhost:61616?jms.redeliveryPolicy.maximumRedeliveries=6&jms.redeliveryPolicy.redeliveryDelay=1000
     user: admin
@@ -34,3 +38,5 @@ eureka:
 logging:
   pattern:
     level: "%5p [txId=%X{transactionId:-SYSTEM}]"
+
+

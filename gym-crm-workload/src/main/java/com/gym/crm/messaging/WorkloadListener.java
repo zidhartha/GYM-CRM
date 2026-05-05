@@ -1,6 +1,6 @@
 package com.gym.crm.messaging;
 
-import com.gym.crm.model.WorkloadRequest;
+import com.gym.crm.dto.WorkloadRequest;
 import com.gym.crm.service.WorkloadService;
 import jakarta.jms.Message;
 import jakarta.validation.ConstraintViolation;
@@ -8,9 +8,7 @@ import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.annotation.JmsListener;
-import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

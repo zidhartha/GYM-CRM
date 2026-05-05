@@ -1,181 +1,138 @@
 package service;
 
-import com.gym.crm.model.ActionType;
+import static org.mockito.Mockito.when;
+
+
+import com.gym.crm.dto.ActionType;
+import com.gym.crm.dto.WorkloadRequest;
+import com.gym.crm.dto.WorkloadSummaryResponse;
 import com.gym.crm.model.TrainerWorkload;
-import com.gym.crm.model.WorkloadRequest;
+import com.gym.crm.repository.TrainerWorkloadRepository;
 import com.gym.crm.service.WorkloadService;
-import com.gym.crm.storage.WorkloadStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.time.LocalDate;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class WorkloadServiceTest {
 
     @Mock
-    private WorkloadStorage workloadStorage;
+    private TrainerWorkloadRepository repository;
 
     @InjectMocks
     private WorkloadService workloadService;
 
-    private final Map<String, TrainerWorkload> storage = new ConcurrentHashMap<>();
+    private WorkloadRequest request;
 
     @BeforeEach
     void setUp() {
-        storage.clear();
-        when(workloadStorage.getStorage()).thenReturn(storage);
-    }
-
-    private WorkloadRequest buildRequest(ActionType actionType, double duration, LocalDate date) {
-        WorkloadRequest request = new WorkloadRequest();
+        request = new WorkloadRequest();
         request.setTrainerUsername("john.doe");
         request.setTrainerFirstName("John");
         request.setTrainerLastName("Doe");
         request.setActive(true);
-        request.setTrainingDate(date);
-        request.setTrainingDuration(duration);
-        request.setActionType(actionType);
-        return request;
+        request.setTrainingDate(LocalDate.of(2024, 3, 15));
+        request.setTrainingDuration(60);
+        request.setActionType(ActionType.ADD);
     }
 
     @Test
-    void shouldCreateNewTrainerEntryWhenNotExists() {
-        WorkloadRequest request = buildRequest(ActionType.ADD, 2.0, LocalDate.of(2025, 3, 15));
+    void updateWorkload_newTrainer_createsDocumentWithCorrectDuration() {
+        when(repository.findByUsername("john.doe")).thenReturn(Optional.empty());
 
         workloadService.updateWorkload(request);
 
-        assertThat(storage).containsKey("john.doe");
-        TrainerWorkload workload = storage.get("john.doe");
-        assertThat(workload.getUsername()).isEqualTo("john.doe");
-        assertThat(workload.getFirstName()).isEqualTo("John");
-        assertThat(workload.getLastName()).isEqualTo("Doe");
-        assertThat(workload.isActive()).isTrue();
+        verify(repository).save(argThat(w ->
+                w.getUsername().equals("john.doe") &&
+                        w.getYearlySummary().get(0).getYear() == 2024 &&
+                        w.getYearlySummary().get(0).getMonths().get(0).getMonth() == 3 &&
+                        w.getYearlySummary().get(0).getMonths().get(0).getTotalDurationMinutes() == 60
+        ));
     }
 
     @Test
-    void shouldAddHoursForNewMonth() {
-        WorkloadRequest request = buildRequest(ActionType.ADD, 2.0, LocalDate.of(2025, 3, 15));
+    void updateWorkload_existingTrainerSameYearMonth_accumulatesDuration() {
+        TrainerWorkload existing = buildWorkload("john.doe", 2024, 3, 40);
+        when(repository.findByUsername("john.doe")).thenReturn(Optional.of(existing));
 
         workloadService.updateWorkload(request);
 
-        TrainerWorkload workload = storage.get("john.doe");
-        assertThat(workload.getYearlySummary())
-                .containsKey(2025);
-        assertThat(workload.getYearlySummary().get(2025))
-                .containsEntry("MARCH", 2.0);
+        verify(repository).save(argThat(w ->
+                w.getYearlySummary().get(0).getMonths().get(0).getTotalDurationMinutes() == 100
+        ));
     }
 
     @Test
-    void shouldAccumulateHoursForSameMonth() {
-        WorkloadRequest first = buildRequest(ActionType.ADD, 2.0, LocalDate.of(2025, 3, 15));
-        WorkloadRequest second = buildRequest(ActionType.ADD, 1.5, LocalDate.of(2025, 3, 20));
+    void updateWorkload_deleteAction_subtractsDuration() {
+        TrainerWorkload existing = buildWorkload("john.doe", 2024, 3, 100);
+        when(repository.findByUsername("john.doe")).thenReturn(Optional.of(existing));
+        request.setActionType(ActionType.DELETE);
 
-        workloadService.updateWorkload(first);
-        workloadService.updateWorkload(second);
-
-        TrainerWorkload workload = storage.get("john.doe");
-        assertThat(workload.getYearlySummary().get(2025).get("MARCH")).isEqualTo(3.5);
-    }
-
-    @Test
-    void shouldTrackMultipleMonthsSeparately() {
-        WorkloadRequest march = buildRequest(ActionType.ADD, 2.0, LocalDate.of(2025, 3, 15));
-        WorkloadRequest april = buildRequest(ActionType.ADD, 3.0, LocalDate.of(2025, 4, 10));
-
-        workloadService.updateWorkload(march);
-        workloadService.updateWorkload(april);
-
-        Map<String, Double> months = storage.get("john.doe").getYearlySummary().get(2025);
-        assertThat(months).containsEntry("MARCH", 2.0);
-        assertThat(months).containsEntry("APRIL", 3.0);
-    }
-
-    @Test
-    void shouldTrackMultipleYearsSeparately() {
-        WorkloadRequest y2024 = buildRequest(ActionType.ADD, 2.0, LocalDate.of(2024, 1, 10));
-        WorkloadRequest y2025 = buildRequest(ActionType.ADD, 3.0, LocalDate.of(2025, 1, 10));
-
-        workloadService.updateWorkload(y2024);
-        workloadService.updateWorkload(y2025);
-
-        TrainerWorkload workload = storage.get("john.doe");
-        assertThat(workload.getYearlySummary()).containsKey(2024);
-        assertThat(workload.getYearlySummary()).containsKey(2025);
-        assertThat(workload.getYearlySummary().get(2024).get("JANUARY")).isEqualTo(2.0);
-        assertThat(workload.getYearlySummary().get(2025).get("JANUARY")).isEqualTo(3.0);
-    }
-
-    @Test
-    void shouldSubtractHoursOnDelete() {
-        WorkloadRequest add = buildRequest(ActionType.ADD, 3.0, LocalDate.of(2025, 3, 15));
-        WorkloadRequest delete = buildRequest(ActionType.DELETE, 1.0, LocalDate.of(2025, 3, 15));
-
-        workloadService.updateWorkload(add);
-        workloadService.updateWorkload(delete);
-
-        assertThat(storage.get("john.doe").getYearlySummary().get(2025).get("MARCH"))
-                .isEqualTo(2.0);
-    }
-
-    @Test
-    void shouldRemoveMonthEntryWhenHoursDropToZero() {
-        WorkloadRequest add = buildRequest(ActionType.ADD, 2.0, LocalDate.of(2025, 3, 15));
-        WorkloadRequest delete = buildRequest(ActionType.DELETE, 2.0, LocalDate.of(2025, 3, 15));
-
-        workloadService.updateWorkload(add);
-        workloadService.updateWorkload(delete);
-
-        Map<String, Double> months = storage.get("john.doe").getYearlySummary().get(2025);
-        assertThat(months).doesNotContainKey("MARCH");
-    }
-
-    @Test
-    void shouldRemoveMonthEntryWhenHoursGoNegative() {
-        WorkloadRequest add = buildRequest(ActionType.ADD, 1.0, LocalDate.of(2025, 3, 15));
-        WorkloadRequest delete = buildRequest(ActionType.DELETE, 5.0, LocalDate.of(2025, 3, 15));
-
-        workloadService.updateWorkload(add);
-        workloadService.updateWorkload(delete);
-
-        Map<String, Double> months = storage.get("john.doe").getYearlySummary().get(2025);
-        assertThat(months).doesNotContainKey("MARCH");
-    }
-
-    @Test
-    void shouldUpdateTrainerInfoOnSubsequentCalls() {
-        WorkloadRequest first = buildRequest(ActionType.ADD, 1.0, LocalDate.of(2025, 3, 15));
-        workloadService.updateWorkload(first);
-
-        WorkloadRequest updated = buildRequest(ActionType.ADD, 1.0, LocalDate.of(2025, 4, 10));
-        updated.setActive(false);
-        workloadService.updateWorkload(updated);
-
-        assertThat(storage.get("john.doe").isActive()).isFalse();
-    }
-
-    @Test
-    void shouldReturnNullWhenTrainerNotFound() {
-        TrainerWorkload result = workloadService.getWorkload("nonexistent");
-        assertThat(result).isNull();
-    }
-
-    @Test
-    void shouldReturnWorkloadWhenTrainerExists() {
-        WorkloadRequest request = buildRequest(ActionType.ADD, 2.0, LocalDate.of(2025, 3, 15));
         workloadService.updateWorkload(request);
 
-        TrainerWorkload result = workloadService.getWorkload("john.doe");
-        assertThat(result).isNotNull();
-        assertThat(result.getUsername()).isEqualTo("john.doe");
+        verify(repository).save(argThat(w ->
+                w.getYearlySummary().get(0).getMonths().get(0).getTotalDurationMinutes() == 40
+        ));
+    }
+
+    @Test
+    void updateWorkload_deleteExceedsBalance_clampsToZero() {
+        TrainerWorkload existing = buildWorkload("john.doe", 2024, 3, 10);
+        when(repository.findByUsername("john.doe")).thenReturn(Optional.of(existing));
+        request.setActionType(ActionType.DELETE);
+
+        workloadService.updateWorkload(request);
+
+        verify(repository).save(argThat(w ->
+                w.getYearlySummary().get(0).getMonths().get(0).getTotalDurationMinutes() == 0
+        ));
+    }
+
+    @Test
+    void updateWorkload_newYear_addsYearEntry() {
+        TrainerWorkload existing = buildWorkload("john.doe", 2023, 3, 60);
+        when(repository.findByUsername("john.doe")).thenReturn(Optional.of(existing));
+
+        workloadService.updateWorkload(request); // date is 2024
+
+        verify(repository).save(argThat(w -> w.getYearlySummary().size() == 2));
+    }
+
+    @Test
+    void getWorkload_existingTrainer_returnsResponse() {
+        TrainerWorkload existing = buildWorkload("john.doe", 2024, 3, 60);
+        existing.setFirstName("John");
+        existing.setLastName("Doe");
+        when(repository.findByUsername("john.doe")).thenReturn(Optional.of(existing));
+
+        WorkloadSummaryResponse response = workloadService.getWorkload("john.doe");
+
+        assertEquals("john.doe", response.getUsername());
+        assertEquals("John", response.getFirstName());
+        assertFalse(response.getYearlySummary().isEmpty());
+    }
+
+    @Test
+    void getWorkload_notFound_throwsNoSuchElementException() {
+        when(repository.findByUsername("unknown")).thenReturn(Optional.empty());
+        assertThrows(NoSuchElementException.class, () -> workloadService.getWorkload("unknown"));
+    }
+
+    private TrainerWorkload buildWorkload(String username, int year, int month, int duration) {
+        TrainerWorkload w = new TrainerWorkload(username);
+        TrainerWorkload.YearlySummary y = new TrainerWorkload.YearlySummary(year);
+        TrainerWorkload.MonthSummary m = new TrainerWorkload.MonthSummary(month);
+        m.setTotalDurationMinutes(duration);
+        y.getMonths().add(m);
+        w.getYearlySummary().add(y);
+        return w;
     }
 }
