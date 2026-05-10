@@ -8,9 +8,12 @@ import com.gym.crm.repository.TrainerWorkloadRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.gym.crm.model.TrainerWorkload.MonthSummary;
 import com.gym.crm.model.TrainerWorkload.YearlySummary;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.NoSuchElementException;
 
@@ -29,7 +32,7 @@ public class WorkloadService {
         int year  = request.getTrainingDate().getYear();
         int month = request.getTrainingDate().getMonthValue();
 
-        //if deleting an non existant object, it must not create a redundant entry in my database.
+        //if deleting a non existant object, it must not create a redundant entry in my database.
         if (request.getActionType() == ActionType.DELETE) {
             repository.findByUsername(request.getTrainerUsername())
                     .ifPresent(workload -> {
@@ -133,5 +136,13 @@ public class WorkloadService {
                         .build())
                 .orElseThrow(() -> new NoSuchElementException(
                         "No workload data for trainer: " + username));
+    }
+
+    @RestControllerAdvice
+    public class GlobalExceptionHandler {
+        @ExceptionHandler(NoSuchElementException.class)
+        public ResponseEntity<Void> handleNotFound(NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
