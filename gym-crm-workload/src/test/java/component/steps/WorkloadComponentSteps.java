@@ -79,17 +79,38 @@ public class WorkloadComponentSteps {
 
     @And("the workload for trainer {string} should show {int} minutes in month {int} of year {int}")
     public void verifyDuration(String username, int expectedMinutes, int month, int year) {
-        TrainerWorkload workload = repository.findByUsername(username)
-                .orElseThrow(() -> new AssertionError("No workload found for " + username));
-
-        int actual = workload.getYearlySummary().stream()
-                .filter(y -> y.getYear() == year)
-                .flatMap(y -> y.getMonths().stream())
-                .filter(m -> m.getMonth() == month)
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("No entry for month " + month))
-                .getTotalDurationMinutes();
-
+        int actual = waitForWorkloadMinutes(username, month, year);
         assertEquals(expectedMinutes, actual);
+    }
+
+    /** Polls Mongo until the month entry exists (covers async JMS; fast path for HTTP tests). */
+    private int waitForWorkloadMinutes(String username, int month, int year) {
+        final long timeoutMs = 15000;
+        final long pollMs = 100;
+        final long deadline = System.currentTimeMillis() + timeoutMs;
+
+        while (System.currentTimeMillis() < deadline) {
+            var workloadOpt = repository.findByUsername(username);
+            if (workloadOpt.isPresent()) {
+                var durationOpt = workloadOpt.get().getYearlySummary().stream()
+                        .filter(y -> y.getYear() == year)
+                        .flatMap(y -> y.getMonths().stream())
+                        .filter(m -> m.getMonth() == month)
+                        .map(m -> m.getTotalDurationMinutes())
+                        .findFirst();
+                if (durationOpt.isPresent()) {
+                    return durationOpt.get();
+                }
+            }
+            try {
+                Thread.sleep(pollMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted while waiting for workload duration", e);
+            }
+        }
+
+        throw new AssertionError("No workload for " + username + " with data for " + year + "-" + month
+                + ". Documents: " + repository.findAll());
     }
 }

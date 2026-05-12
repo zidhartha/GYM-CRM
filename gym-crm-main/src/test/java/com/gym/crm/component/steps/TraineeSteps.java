@@ -2,7 +2,7 @@ package com.gym.crm.component.steps;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gym.crm.component.SharedState;
+import com.gym.crm.SharedState;
 import com.gym.crm.service.JwtService;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;

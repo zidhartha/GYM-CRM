@@ -2,7 +2,7 @@ package com.gym.crm.component.steps;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gym.crm.component.SharedState;
+import com.gym.crm.SharedState;
 import io.cucumber.java.en.Then;
 import org.springframework.beans.factory.annotation.Autowired;
 

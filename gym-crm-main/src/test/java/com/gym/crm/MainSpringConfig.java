@@ -1,4 +1,4 @@
-package com.gym.crm.integration;
+package com.gym.crm;
 
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,7 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class IntegrationSpringConfig {
+public class MainSpringConfig {
 
     @SpyBean
     public JmsTemplate jmsTemplate;

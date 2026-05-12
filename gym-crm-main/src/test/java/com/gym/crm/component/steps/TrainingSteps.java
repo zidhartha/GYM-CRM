@@ -1,6 +1,6 @@
 package com.gym.crm.component.steps;
 
-import com.gym.crm.component.SharedState;
+import com.gym.crm.SharedState;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

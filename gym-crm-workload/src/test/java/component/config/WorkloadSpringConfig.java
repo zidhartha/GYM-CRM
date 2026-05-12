@@ -1,6 +1,7 @@
 package component.config;
 
 import com.gym.crm.WorkloadApplication;
+import component.config.TestSecurityConfig;
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,5 +18,5 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @Import(TestSecurityConfig.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class ComponentSpringConfig {
+public class WorkloadSpringConfig {
 }

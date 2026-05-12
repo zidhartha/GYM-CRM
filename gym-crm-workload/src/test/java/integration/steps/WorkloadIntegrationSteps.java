@@ -69,41 +69,6 @@ public class WorkloadIntegrationSteps {
         Thread.sleep(2000);
     }
 
-    @Then("the workload for trainer {string} should show {int} minutes in month {int} of year {int}")
-    public void verifyDuration(String username, int expectedMinutes, int month, int year) {
-        int actual = waitForDuration(username, month, year);
-        assertEquals(expectedMinutes, actual);
-    }
-
-    private int waitForDuration(String username, int month, int year) {
-        final long timeoutMs = 15000;
-        final long pollMs = 100;
-        final long deadline = System.currentTimeMillis() + timeoutMs;
-
-        while (System.currentTimeMillis() < deadline) {
-            Optional<TrainerWorkload> workload = repository.findByUsername(username);
-            if (workload.isPresent()) {
-                Optional<Integer> duration = workload.get().getYearlySummary().stream()
-                        .filter(y -> y.getYear() == year)
-                        .flatMap(y -> y.getMonths().stream())
-                        .filter(m -> m.getMonth() == month)
-                        .map(m -> m.getTotalDurationMinutes())
-                        .findFirst();
-                if (duration.isPresent()) {
-                    return duration.get();
-                }
-            }
-            try {
-                Thread.sleep(pollMs);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("Interrupted while waiting for workload duration", e);
-            }
-        }
-
-        throw new RuntimeException("No workload found for " + username + ". Current documents: " + repository.findAll());
-    }
-
     @Then("no workload record should exist for trainer {string}")
     public void verifyNoRecord(String username) {
         Optional<TrainerWorkload> workload = repository.findByUsername(username);

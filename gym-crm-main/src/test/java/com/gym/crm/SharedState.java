@@ -1,4 +1,4 @@
-package com.gym.crm.component;
+package com.gym.crm;
 
 import io.cucumber.spring.ScenarioScope;
 import org.springframework.stereotype.Component;
