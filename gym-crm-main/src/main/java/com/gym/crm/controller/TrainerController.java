@@ -30,7 +30,7 @@ public class TrainerController {
     @PostMapping
     @Operation(summary="Creating a trainer")
     public ResponseEntity<RegistrationResponseDto> createTrainer(
-            @RequestBody TrainerCreateDto trainerCreateDto
+            @RequestBody @Valid TrainerCreateDto trainerCreateDto
             ){
         return ResponseEntity.status(201).body(trainerService.createTrainer(trainerCreateDto));
     }
