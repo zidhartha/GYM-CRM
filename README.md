@@ -77,3 +77,80 @@ https://www.baeldung.com/spring-cloud-netflix-eureka
 1. For REST API implementation use second level of Richardson maturity model.
 
 2. Try to understand in which case training can be deleted.
+
+---
+
+## Running with Docker
+
+Ports: main `8080`, workload `8081`, auth `8083`, eureka `8761`, activemq console `8161`, postgres `5432`, mongo `27017`.
+
+> Run all commands from the project root. First build pulls images and compiles all modules, so it takes a few minutes.
+
+### Start clean (run once)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.integration.yml down -v
+```
+
+Use `-v` only here. It wipes the volumes so Postgres re-initializes the `GYM-CRM` database. (Reusing an old volume causes `FATAL: database "GYM-CRM" does not exist`.)
+
+### Subtask 1 — build images and run WITHOUT integrations
+
+Runs only `gym-crm-main`, `gym-crm-workload` and their databases. Eureka, ActiveMQ and the auth server are disabled via the `disabled` Spring profile.
+
+```bash
+docker compose up -d --build
+docker compose ps
+```
+
+Verify (wait ~60s for `gym-crm-main` to become `healthy`):
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+Pass criteria:
+- `docker compose ps` lists only `postgres`, `mongodb`, `gym-crm-main`, `gym-crm-workload`.
+- Health returns `"status":"UP"` with a `db` component and **no** `eureka`/`jms` components.
+
+### Subtask 2 — run WITH integrations enabled (DB + queue + discovery)
+
+Adds ActiveMQ, Eureka and the auth server, and switches the apps to the `default` profile.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.integration.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.integration.yml ps
+```
+
+Verify (wait ~60s):
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+Pass criteria:
+- All 7 services are `Up` / `healthy`.
+- Health returns `"status":"UP"` with `db`, `jms` (ActiveMQ) and `eureka` all `UP`.
+- Eureka dashboard at http://localhost:8761/ lists `GYM-CRM-MAIN`, `WORKLOAD-SERVICE`, `AUTH-SERVICE`.
+
+### Subtask 3 — check logs and open a shell in the containers
+
+```bash
+# Logs
+docker compose -f docker-compose.yml -f docker-compose.integration.yml logs gym-crm-main --tail 50
+docker compose -f docker-compose.yml -f docker-compose.integration.yml logs gym-crm-workload --tail 50
+
+# Shell inside a running container
+docker exec -it gym-crm-main bash
+#   then: ls /app   and   exit
+```
+
+### Stop
+
+```bash
+# keep database data
+docker compose -f docker-compose.yml -f docker-compose.integration.yml down
+
+# wipe database data too
+docker compose -f docker-compose.yml -f docker-compose.integration.yml down -v
+```

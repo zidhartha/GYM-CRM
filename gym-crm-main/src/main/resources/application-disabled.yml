@@ -1,0 +1,17 @@
+eureka:
+  client:
+    enabled: false
+
+spring:
+  cloud:
+    discovery:
+      enabled: false
+  jms:
+    listener:
+      auto-startup: false
+  security:
+    oauth2:
+      client:
+        provider:
+          gym-main:
+            token-uri: http://localhost:8083/oauth2/token   # unreachable but won't crash on startup

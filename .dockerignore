@@ -1,0 +1,8 @@
+.git
+.idea
+**/.idea
+**/target
+**/*.iml
+hs_err_pid*
+*.log
+data
