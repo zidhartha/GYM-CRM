@@ -1,5 +1,3 @@
-# Microservices
-
 ## Microservices
 
 Based on the codebase created during the previous module, implement follow functionality
