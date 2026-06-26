@@ -21,3 +21,5 @@ Feature: Workload REST API
   Scenario: Submit workload with missing required fields
     When a workload update is submitted with missing trainer username
     Then the workload response status should be 400
+
+

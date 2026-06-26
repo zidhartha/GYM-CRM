@@ -1,31 +1,85 @@
 services:
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_DB: GYM-CRM
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: wildwest123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gym-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d GYM-CRM"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   mongodb:
     image: mongo:7
-    container_name: gym-mongodb
+    container_name: mongodb
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    networks:
+      - gym-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  activemq:
-    image: apache/activemq-classic
-    container_name: gym-activemq
+  gym-crm-main:
+    build:
+      context: .
+      dockerfile: gym-crm-main/Dockerfile
+    container_name: gym-crm-main
     ports:
-      - "61616:61616"
-      - "8161:8161"
-
-  postgres:
-    image: postgres:16
-    container_name: gym-postgres
-    ports:
-      - "5432:5432"
+      - "8080:8080"
     environment:
-      POSTGRES_DB: gym_crm
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: wildwest123
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      SPRING_PROFILES_ACTIVE: disabled
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/GYM-CRM
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: wildwest123
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - gym-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  gym-crm-workload:
+    build:
+      context: .
+      dockerfile: gym-crm-workload/Dockerfile
+    container_name: gym-crm-workload
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: disabled
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/gym-workload
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - gym-network
 
 volumes:
-  mongo_data:
   postgres_data:
+  mongo_data:
+
+networks:
+  gym-network:
+    driver: bridge
+    name: gym-network
